@@ -1,0 +1,53 @@
+[file_prefs]
+final_new_line=true
+ensure_convert_new_lines=false
+strip_trailing_spaces=false
+replace_tabs=true
+
+[indentation]
+indent_width=4
+indent_type=0
+indent_hard_tab_width=8
+detect_indent=false
+detect_indent_width=false
+indent_mode=2
+
+[project]
+name=PowerDns
+base_path=/home/dbartley/projects/PowerDNS-Admin
+description=
+file_patterns=
+
+[long line marker]
+long_line_behaviour=2
+long_line_column=79
+
+[files]
+current_page=5
+FILE_NAME_0=927;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2F__init__.py;0;4
+FILE_NAME_1=16603;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fviews.py;0;4
+FILE_NAME_2=3585;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fmodels.py;0;4
+FILE_NAME_3=2764;HTML;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Ftemplates%2Fadmin_history.html;0;4
+FILE_NAME_4=9206;HTML;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Ftemplates%2Fdomain.html;0;4
+FILE_NAME_5=1019;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fstatic%2Fcustom%2Fjs%2Fcustom.js;0;4
+
+[VTE]
+last_dir=/home/dbartley
+
+[build-menu]
+PythonFT_01_LB=check
+PythonFT_01_CM=pyfilechecker "%f" spotx
+PythonFT_01_WD=
+Pythonerror_regex=([^:]+):([0-9]+):([0-9:]+)? .*
+filetypes=Python;
+PythonFT_02_LB=
+PythonFT_02_CM=
+PythonFT_02_WD=
+PythonFT_00_LB=_Compile
+PythonFT_00_CM=python -m py_compile "%f"
+PythonFT_00_WD=
+
+[editor]
+line_wrapping=false
+line_break_column=80
+auto_continue_multiline=true

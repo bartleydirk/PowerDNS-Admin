@@ -1,5 +1,6 @@
 function applyChanges(data, url, showResult, refreshPage) {
     var success = false;
+    console.log('applyChanges url is "' + url + '"');
     $.ajax({
         type : "POST",
         url : url,

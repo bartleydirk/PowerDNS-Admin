@@ -73,6 +73,7 @@
     $(document.body).on('click', '.history-info-button', function() {
         var modal = $("#modal_history_info");
         var info = $(this).val();
+        console.log('the info be "' + info + '"');
         $('#modal-code-content').html(json_library.prettyPrint(info));
         modal.modal('show');
     });
