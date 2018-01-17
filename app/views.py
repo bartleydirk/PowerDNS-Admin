@@ -416,7 +416,7 @@ def record_apply(domain_name):
     example jdata: {u'record_ttl': u'1800', u'record_type': u'CNAME', u'record_name': u'test4', u'record_status': u'Active', u'record_data': u'duykhanh.me'}
     """
     #TODO: filter removed records / name modified records.
-    #pprint(asdf)
+    pprint(asdfqser)
     try:
         pdata = request.data
         jdata = json.loads(pdata)

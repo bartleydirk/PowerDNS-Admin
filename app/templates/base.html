@@ -164,7 +164,7 @@
 </div>
 <!-- ./wrapper -->
 <script type="text/javascript">
-	$SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
 </script>
 {% block scripts %}
 <!-- jQuery 2.2.0 -->
@@ -195,7 +195,9 @@
 <!-- Multiselect -->
 <script src="{{ url_for('static', filename='multiselect/js/jquery.multi-select.js') }}"></script>
 <!-- PowerDNS-Admin custom.js -->
-<script src="{{ url_for('static', filename='custom/js/custom.js') }}"></script>
+<script src="{{ url_for('static', filename='custom/js/debug.js', ver='13') }}"></script>
+<script src="{{ url_for('static', filename='custom/js/custom.js', ver='13') }}"></script>
+
 {% endblock %}
 {% block extrascripts %}
 {% endblock %}

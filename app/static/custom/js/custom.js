@@ -1,6 +1,9 @@
 function applyChanges(data, url, showResult, refreshPage) {
     var success = false;
     console.log('applyChanges url is "' + url + '"');
+    strng = object_to_debugstring(data);
+    console.log('applyChanges data is "' + strng + '"');
+    console.log('applyChanges nevermind');
     $.ajax({
         type : "POST",
         url : url,
@@ -43,6 +46,8 @@ function getTableData(table) {
         record["record_ttl"] = r[3].trim();
         record["record_data"] = r[4].trim();
         records.push(record);
+        strng = object_to_debugstring(record);
+        console.log('getTableData adding object ' + strng);
     });
     return records
 }
