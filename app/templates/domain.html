@@ -217,7 +217,7 @@
         modal.find('.modal-body p').text(info);
         modal.find('#button_apply_confirm').click(function() {
             var data = getTableData(table);
-            console.log('button_apply_changes data is "' + data + '"')
+            console.log('button_apply_changes data is "' + data.length + '"')
             applyChanges(data, $SCRIPT_ROOT + '/domain/' + domain + '/apply', true);
             modal.modal('hide');
         })

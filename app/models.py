@@ -884,6 +884,13 @@ class Record(object):
         # convert them to list of list (just has [name, type]) instead of list of hash
         # to compare easier
         list_current_records = [[x['name'],x['type']] for x in current_records]
+        for item in current_records:
+            if item['name'] == 'fred.spotx.tv':
+                fred_cur = item
+        for item in new_records:
+            if item['name'] == 'fred.spotx.tv':
+                fred_new = item
+
         list_new_records = [[x['name'],x['type']] for x in new_records]
 
         # get list of deleted records
@@ -894,6 +901,7 @@ class Record(object):
         deleted_records = [x for x in current_records if [x['name'],x['type']] in list_deleted_records and x['type'] in app.config['RECORDS_ALLOW_EDIT']]
 
         # return a tuple
+        pprint(asdf)
         return deleted_records, new_records
 
 

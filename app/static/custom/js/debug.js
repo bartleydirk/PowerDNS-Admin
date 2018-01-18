@@ -59,7 +59,7 @@ function object_to_debugstring(dta) {
                 for (var key2 in dta[key]) {
                     str = str + " " + key2 + " " + dta[key][key2];
                 }
-                str = str + "\n"
+                str = str + "\n - "
             } else {
                 str = str + " " + key + " " +dta[key];
             }

@@ -416,14 +416,18 @@ def record_apply(domain_name):
     example jdata: {u'record_ttl': u'1800', u'record_type': u'CNAME', u'record_name': u'test4', u'record_status': u'Active', u'record_data': u'duykhanh.me'}
     """
     #TODO: filter removed records / name modified records.
-    pdata = request.data
-    vdata = request.values
-    adata = request.args
-    fdata = request.form
+    #pdata = request.data
+    #vdata = request.values
+    #adata = request.args
+    #fdata = request.form
+    pdata = request.form.get('postdata')
     #try:
     if True:
         #pdata = request.data
-        pdata = request.form.keys()[0]
+        #key = request.form.keys()[0]
+        #kln = len(request.form.keys())
+        #data = request.form[key]
+        #pprint(asdf)
         jdata = json.loads(pdata)
 
         r = Record()

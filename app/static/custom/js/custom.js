@@ -2,12 +2,15 @@ function applyChanges(data, url, showResult, refreshPage) {
     var success = false;
     console.log('applyChanges url is "' + url + '"');
     strng = object_to_debugstring(data);
-    console.log('applyChanges data is "' + strng + '"');
+    console.log('applyChanges data is :\n"' + strng + '"');
+    var postdata = JSON.stringify(data);
+    var ntdata = {'postdata': postdata}
     //console.log('applyChanges nevermind');
     $.ajax({
         type : "POST",
         url : url,
-        data : JSON.stringify(data),// now data come in this function
+        //data : JSON.stringify(data),// now data come in this function
+        data : ntdata,
         contentType : "application/json; charset=utf-8",
         crossDomain : true,
         dataType : "json",
@@ -39,7 +42,8 @@ function getTableData(table) {
     var records = []
     table.rows().every(function() {
         var r = this.data();
-        if (r[8].trim() == '1') {
+        //if (r[8].trim() == '1') {
+        if (true) {
             var record = {}
             record["record_name"] = r[0].trim();
             record["record_type"] = r[1].trim();
