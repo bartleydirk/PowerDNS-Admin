@@ -32,3 +32,6 @@ table td {
    color: olive;
 }
 
+table#tbl_records tr.deletepending {
+    background-color: red;
+}

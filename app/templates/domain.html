@@ -49,12 +49,12 @@
                                 <th>Edit</th>
                                 <th>Delete</th>
                                 <th>sort</th>
-                                <th>changed</th>
+                                <!-- <th>changed</th> -->
                             </tr>
                         </thead>
                         <tbody>
                                 {% for record in records %}
-                                <tr class="odd row_record" id="{{ domain.name }}">
+                                <tr class="odd row_record" id="{{ domain.name }}" data-name="{{ (record.name,domain.name)|display_record_name }}">
                                     <td>
                                         {{ (record.name,domain.name)|display_record_name }}
                                     </td>
@@ -95,8 +95,7 @@
                                     </td>
                                     <!-- hidden column that we can sort on -->
                                     <td>1</td>
-                                    <!-- hidden column that we can identify as changed -->
-                                    <td>0</td>
+                                    <!-- hidden column that we can identify as changed <td>0</td> -->
                                 </tr>
                                 {% endfor %}
                         </tbody>
@@ -111,6 +110,7 @@
     <!-- /.row -->
 </section>
 {% endblock %}
+
 {% block extrascripts %}
 <script>
     // superglobals
@@ -166,16 +166,20 @@
         var modal = $("#modal_delete");
         var table = $("#tbl_records").DataTable();
         var record = $(this).prop('id');
+        var parenttr = $(this).parents('tr');
         var nRow = $(this).parents('tr')[0];
         var info = "Are you sure you want to delete " + record + "?"; 
         modal.find('.modal-body p').text(info);
         modal.find('#button_delete_confirm').click(function() {
-            table.row(nRow).remove().draw();
+            //table.row(nRow).remove().draw();
             modal.modal('hide');
+            //trid = parenttr.attr('id');
+            parenttr.addClass('deletepending');
+            //console.log('trid is' + trid);
         })
         modal.modal('show');
-        
     });
+
     // handle edit button
     $(document.body).on("click", ".button_edit, .row_record", function(e) {
         console.log('.button_edit .row_record');

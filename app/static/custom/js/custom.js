@@ -75,7 +75,7 @@ function saveRow(oTable, nRow) {
     oTable.cell(nRow,2).data(status);
     oTable.cell(nRow,3).data(jqSelect[2].value);
     oTable.cell(nRow,4).data(jqInputs[1].value);
-    oTable.cell(nRow,8).data('1');
+    // oTable.cell(nRow,8).data('1');
 
     var record = jqInputs[0].value;
     var button_edit = "<button type=\"button\" class=\"btn btn-flat btn-warning button_edit\" id=\"" + record +  "\">Edit&nbsp;<i class=\"fa fa-edit\"></i></button>"
