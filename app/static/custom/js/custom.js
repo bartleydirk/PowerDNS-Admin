@@ -3,7 +3,7 @@ function applyChanges(data, url, showResult, refreshPage) {
     console.log('applyChanges url is "' + url + '"');
     strng = object_to_debugstring(data);
     console.log('applyChanges data is "' + strng + '"');
-    console.log('applyChanges nevermind');
+    //console.log('applyChanges nevermind');
     $.ajax({
         type : "POST",
         url : url,
@@ -34,26 +34,28 @@ function applyChanges(data, url, showResult, refreshPage) {
 
 function getTableData(table) {
     var rData = []
-
+    console.log('getTableData');
     // reformat - pretty format
     var records = []
     table.rows().every(function() {
         var r = this.data();
-        var record = {}
-        record["record_name"] = r[0].trim();
-        record["record_type"] = r[1].trim();
-        record["record_status"] = r[2].trim();
-        record["record_ttl"] = r[3].trim();
-        record["record_data"] = r[4].trim();
-        records.push(record);
-        strng = object_to_debugstring(record);
-        console.log('getTableData adding object ' + strng);
+        if (r[8].trim() == '1') {
+            var record = {}
+            record["record_name"] = r[0].trim();
+            record["record_type"] = r[1].trim();
+            record["record_status"] = r[2].trim();
+            record["record_ttl"] = r[3].trim();
+            record["record_data"] = r[4].trim();
+            records.push(record);
+            strng = object_to_debugstring(record);
+            console.log('getTableData adding object ' + strng);
+        }
     });
     return records
 }
 
 function saveRow(oTable, nRow) {
-
+    console.log('saveRow');
     var jqInputs = $(oTable.row(nRow).node()).find("input");
     var jqSelect = $(oTable.row(nRow).node()).find("select");
 
@@ -69,6 +71,7 @@ function saveRow(oTable, nRow) {
     oTable.cell(nRow,2).data(status);
     oTable.cell(nRow,3).data(jqSelect[2].value);
     oTable.cell(nRow,4).data(jqInputs[1].value);
+    oTable.cell(nRow,8).data('1');
 
     var record = jqInputs[0].value;
     var button_edit = "<button type=\"button\" class=\"btn btn-flat btn-warning button_edit\" id=\"" + record +  "\">Edit&nbsp;<i class=\"fa fa-edit\"></i></button>"
@@ -81,6 +84,7 @@ function saveRow(oTable, nRow) {
 }
 
 function restoreRow(oTable, nRow) {
+    console.log('restoreRow');
     var aData = oTable.row(nRow).data();
     var jqTds = $('>td', nRow);
     oTable.row(nRow).data(aData);
@@ -88,6 +92,7 @@ function restoreRow(oTable, nRow) {
 }
 
 function editRow(oTable, nRow) {
+    console.log('editRow');
     var aData = oTable.row(nRow).data();
     var jqTds = oTable.cells(nRow,'').nodes();
     var record_types = "";
@@ -118,11 +123,13 @@ function editRow(oTable, nRow) {
 
 function SelectElement(elementID, valueToSelect)
 {
+    //console.log('SelectElement ' + elementID);
     var element = document.getElementById(elementID);
     element.value = valueToSelect;
 }
 
 function getdnssec(url){
+    console.log('getdnssec');
 
     $.getJSON(url, function(data) {
         var modal = $("#modal_dnssec_info");

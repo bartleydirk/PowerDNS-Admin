@@ -48,6 +48,8 @@
                                 <th>Data</th>
                                 <th>Edit</th>
                                 <th>Delete</th>
+                                <th>sort</th>
+                                <th>changed</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -93,6 +95,8 @@
                                     </td>
                                     <!-- hidden column that we can sort on -->
                                     <td>1</td>
+                                    <!-- hidden column that we can identify as changed -->
+                                    <td>0</td>
                                 </tr>
                                 {% endfor %}
                         </tbody>
@@ -142,8 +146,14 @@
             {
                 // hidden column so that we can add new records on top
                 // regardless of whatever sorting is done
-                visible: false,
+                visible: true,
                 targets: [ 7 ]
+            },
+            {
+                // hidden column so that we can add new records on top
+                // regardless of whatever sorting is done
+                visible: true,
+                targets: [ 8 ]
             }
         ],
         "orderFixed": [[7, 'asc']]
@@ -151,6 +161,7 @@
     
     // handle delete button
     $(document.body).on("click", ".button_delete", function(e) {
+        console.log('.button_delete');
         e.stopPropagation();
         var modal = $("#modal_delete");
         var table = $("#tbl_records").DataTable();
@@ -167,6 +178,7 @@
     });
     // handle edit button
     $(document.body).on("click", ".button_edit, .row_record", function(e) {
+        console.log('.button_edit .row_record');
          e.stopPropagation();
          if ($(this).is('tr')) {
             var nRow = $(this)[0]; 
@@ -197,6 +209,7 @@
     
     // handle apply changes button
     $(document.body).on("click",".button_apply_changes", function() {
+        console.log('.button_apply_changes');
         var modal = $("#modal_apply_changes");
         var table = $("#tbl_records").DataTable();
         var domain = $(this).prop('id');
@@ -214,6 +227,7 @@
     
     // handle add record button
     $(document.body).on("click", ".button_add_record", function (e) {
+            console.log('.button_add_record');
             if (nNew || nEditing) {
                 var modal = $("#modal_error");
                 modal.find('.modal-body p').text("Previous record not saved. Please save it before adding more record.");
@@ -234,6 +248,7 @@
     
     //handle cancel button
     $(document.body).on("click", ".button_cancel", function (e) {
+            console.log('.button_cancel');
             e.stopPropagation();
             var oTable = $("#tbl_records").DataTable();
             if (nNew) {
@@ -248,6 +263,7 @@
     
     //handle save button
     $(document.body).on("click", ".button_save", function (e) {
+            console.log('.button_save');
             e.stopPropagation();
             var table = $("#tbl_records").DataTable();
             saveRow(table, nEditing);
@@ -257,6 +273,7 @@
     
     //handle update_from_master button
     $(document.body).on("click", ".button_update_from_master", function (e) {
+            console.log('.button_update_from_master');
             var domain = $(this).prop('id');
             applyChanges({'domain': domain}, $SCRIPT_ROOT + '/domain/' + domain + '/update');
     });
@@ -264,6 +281,7 @@
     {% if record_helper_setting %}
     //handle wacky record types
     $(document.body).on("focus", "#current_edit_record_data", function (e) {
+        console.log('#current_edit_record_data');
         var record_type = $(this).parents("tr").find('#record_type').val();
         var record_data = $(this);
         if (record_type == "MX") {
