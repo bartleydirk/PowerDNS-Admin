@@ -921,6 +921,7 @@ class Record(object):
             records.append(record)
         
         deleted_records, new_records = self.compare(domain, records)
+        pprint(asdf)
 
         records = []
         for r in deleted_records:
