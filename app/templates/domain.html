@@ -222,11 +222,10 @@
         modal.find('#button_apply_confirm').click(function() {
             var data = getTableData(table);
             console.log('button_apply_changes data is "' + data.length + '"')
-            applyChanges(data, $SCRIPT_ROOT + '/domain/' + domain + '/apply', true);
+            applyChanges(data, "{{ url_for('record_apply', domain_name=domain.name) }}", true);
             modal.modal('hide');
         })
         modal.modal('show');
-        
     });
     
     // handle add record button

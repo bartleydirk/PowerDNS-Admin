@@ -1123,8 +1123,8 @@ class Record(object):
                 if same:
                     samecnt += 1
                 testme['same'] = same
-            else:
-                pprint(qwerqwer)
+        #    else:
+        #        pprint(qwerqwer)
         #look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(unique_key))
         net_final = []
         for key in unique_key:

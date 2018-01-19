@@ -5,11 +5,9 @@ function applyChanges(data, url, showResult, refreshPage) {
     console.log('applyChanges data is :\n"' + strng + '"');
     var postdata = JSON.stringify(data);
     var ntdata = {'postdata': postdata}
-    //console.log('applyChanges nevermind');
     $.ajax({
         type : "POST",
         url : url,
-        //data : JSON.stringify(data),// now data come in this function
         data : ntdata,
         //contentType : "application/json; charset=utf-8",
         crossDomain : true,
@@ -42,18 +40,14 @@ function getTableData(table) {
     var records = []
     table.rows().every(function() {
         var r = this.data();
-        //if (r[8].trim() == '1') {
-        if (true) {
-            var record = {}
-            record["record_name"] = r[0].trim();
-            record["record_type"] = r[1].trim();
-            record["record_status"] = r[2].trim();
-            record["record_ttl"] = r[3].trim();
-            record["record_data"] = r[4].trim();
-            records.push(record);
-            strng = object_to_debugstring(record);
-            console.log('getTableData adding object ' + strng);
-        }
+        var record = {}
+        record["record_name"] = r[0].trim();
+        record["record_type"] = r[1].trim();
+        record["record_status"] = r[2].trim();
+        record["record_ttl"] = r[3].trim();
+        record["record_data"] = r[4].trim();
+        records.push(record);
+        strng = object_to_debugstring(record);
     });
     return records
 }
