@@ -11,7 +11,7 @@ function applyChanges(data, url, showResult, refreshPage) {
         url : url,
         //data : JSON.stringify(data),// now data come in this function
         data : ntdata,
-        contentType : "application/json; charset=utf-8",
+        //contentType : "application/json; charset=utf-8",
         crossDomain : true,
         dataType : "json",
         success : function(data, status, jqXHR) {

@@ -879,17 +879,21 @@ class Record(object):
         Input is a list of hashes (records)
         """
         # get list of current records we have in powerdns
-        current_records = self.get_record_data(domain_name)['records']
+        self.current_records = self.get_record_data(domain_name)['records']
 
         # convert them to list of list (just has [name, type]) instead of list of hash
         # to compare easier
-        list_current_records = [[x['name'],x['type']] for x in current_records]
-        for item in current_records:
+        list_current_records = [[x['name'],x['type']] for x in self.current_records]
+        for item in self.current_records:
             if item['name'] == 'fred.spotx.tv':
-                fred_cur = item
-        for item in new_records:
+                self.fred_cur = item
+
+        self.fred_new = []
+        self.fred_pos = []
+        for (position, item) in enumerate(new_records):
             if item['name'] == 'fred.spotx.tv':
-                fred_new = item
+                self.fred_new.append(item)
+                self.fred_pos.append(position)
 
         list_new_records = [[x['name'],x['type']] for x in new_records]
 
@@ -898,10 +902,10 @@ class Record(object):
         list_deleted_records = [x for x in list_current_records if x not in list_new_records]
 
         # convert back to list of hash
-        deleted_records = [x for x in current_records if [x['name'],x['type']] in list_deleted_records and x['type'] in app.config['RECORDS_ALLOW_EDIT']]
+        deleted_records = [x for x in self.current_records if [x['name'], x['type']] in list_deleted_records and x['type'] in app.config['RECORDS_ALLOW_EDIT']]
 
         # return a tuple
-        pprint(asdf)
+        #pprint(asdf)
         return deleted_records, new_records
 
 
@@ -929,7 +933,7 @@ class Record(object):
             records.append(record)
         
         deleted_records, new_records = self.compare(domain, records)
-        pprint(asdf)
+        #pprint(asdf)
 
         records = []
         for r in deleted_records:
@@ -1047,7 +1051,7 @@ class Record(object):
                         ]
                     })
 
-        postdata_for_new = {"rrsets": final_records}
+        postdata_for_new = {"rrsets": self.final_records_limit(final_records)}
 
         try:
             headers = {}
@@ -1066,6 +1070,68 @@ class Record(object):
         except Exception, e:
             logging.error("Cannot apply record changes to domain %s. DETAIL: %s" % (str(e), domain))
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+
+    def final_records_limit(self, final_records):
+        """limit the number of replace changes, for logging"""
+        unique_key = {}
+        notcurrent = []
+        re_endindot = re.compile(r'\.$')
+        typeavoid = ['SOA', 'NS']
+        for position, item in enumerate(final_records):
+            if item['type'] not in typeavoid:
+                key = (item['name'], item['type'])
+                unique_key[key] = {'final_records': position, 'same': False}
+        for position, item in enumerate(self.current_records):
+            if item['type'] not in typeavoid:
+                name = item['name']
+                if not re_endindot.search(name):
+                    name = '%s.' % (name)
+                key = (name, item['type'])
+                if key in unique_key:
+                    unique_key[key]['current_records'] = position
+                else:
+                    notcurrent.append(key)
+                    unique_key[key] = {'current_records': position, 'same': False}
+
+        samecnt = 0
+        lencnt = 0
+        ttlcnt = 0
+        reccnt = 0
+        for key in unique_key:
+            testme = unique_key[key]
+            if 'current_records' in testme and 'final_records' in testme:
+                current = self.current_records[testme['current_records']]
+                final = final_records[testme['final_records']]
+                same = True
+                # test for the number of records
+                if len(current['records']) != len(final['records']):
+                    same = False
+                    lencnt += 1
+                # test for the content being the same
+                for currec in current['records']:
+                    isinfinal = False
+                    for finrec in final['records']:
+                        if currec['content'] == finrec['content']:
+                            isinfinal = True
+                    if not isinfinal:
+                        same = False
+                        reccnt += 1
+                # test for the ttl being the same
+                if current['ttl'] != final['ttl']:
+                    same = False
+                    ttlcnt += 1
+                if same:
+                    samecnt += 1
+                testme['same'] = same
+            else:
+                pprint(qwerqwer)
+        #look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(unique_key))
+        net_final = []
+        for key in unique_key:
+            testme = unique_key[key]
+            if testme['same'] == False:
+                net_final.append(final_records[testme['final_records']])
+        return net_final
 
     def auto_ptr(self, domain, new_records, deleted_records):
         """
