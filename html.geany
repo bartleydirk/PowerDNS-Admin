@@ -23,7 +23,11 @@ long_line_behaviour=2
 long_line_column=79
 
 [files]
-current_page=0
+current_page=3
+FILE_NAME_0=9613;HTML;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Ftemplates%2Fbase.html;0;4
+FILE_NAME_1=11552;HTML;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Ftemplates%2Fdomain.html;0;4
+FILE_NAME_2=2629;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fstatic%2Fcustom%2Fjs%2Fdebug.js;0;4
+FILE_NAME_3=7176;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fstatic%2Fcustom%2Fjs%2Fcustom.js;0;4
 
 [VTE]
 last_dir=/home/dbartley

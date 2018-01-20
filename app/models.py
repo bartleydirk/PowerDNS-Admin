@@ -9,11 +9,13 @@ import traceback
 import pyotp
 import re
 import dns.reversename
+import json
 
 from datetime import datetime
 from distutils.util import strtobool
 from distutils.version import StrictVersion
-from flask_login import AnonymousUserMixin
+from flask_login import AnonymousUserMixin, current_user
+from sqlalchemy.dialects.mysql import JSON
 
 from app import app, db
 from lib import utils
@@ -1053,11 +1055,14 @@ class Record(object):
 
         postdata_for_new = {"rrsets": self.final_records_limit(final_records)}
 
-        try:
+        #try:
+        if True:
+            # move this to after fetch_jason
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
-            jdata1 = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain), headers=headers, method='PATCH', data=postdata_for_delete)
-            jdata2 = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain), headers=headers, method='PATCH', data=postdata_for_new)
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            jdata1 = utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_delete)
+            jdata2 = utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_new)
 
             if 'error' in jdata2.keys():
                 logging.error('Cannot apply record changes.')
@@ -1066,39 +1071,54 @@ class Record(object):
             else:
                 self.auto_ptr(domain, new_records, deleted_records)
                 logging.info('Record was applied successfully.')
+                self.history_log(final_records, domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
-        except Exception, e:
-            logging.error("Cannot apply record changes to domain %s. DETAIL: %s" % (str(e), domain))
-            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+
+        #except Exception, e:
+        #    logging.error("Cannot apply record changes to domain %s. DETAIL: %s" % (str(e), domain))
+        #    return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+
+    def history_log(self, final_records, domain_name):
+        for key in self.unique_key:
+            testme = self.unique_key[key]
+            if testme['same'] == False:
+                current = self.current_records[testme['current_records']]
+                final = final_records[testme['final_records']]
+                jdata = ''
+                history = History(msg='Apply record change to domain %s' % domain_name,
+                                  detail=str(jdata), created_by=current_user.username,
+                                  fromdata=current, todata=final, domain=domain_name)
+                db.session.add(history)
+                db.session.commit()
 
     def final_records_limit(self, final_records):
         """limit the number of replace changes, for logging"""
-        unique_key = {}
+        self.unique_key = {}
         notcurrent = []
         re_endindot = re.compile(r'\.$')
         typeavoid = ['SOA', 'NS']
         for position, item in enumerate(final_records):
             if item['type'] not in typeavoid:
                 key = (item['name'], item['type'])
-                unique_key[key] = {'final_records': position, 'same': False}
+                self.unique_key[key] = {'final_records': position, 'same': False}
         for position, item in enumerate(self.current_records):
             if item['type'] not in typeavoid:
                 name = item['name']
                 if not re_endindot.search(name):
                     name = '%s.' % (name)
                 key = (name, item['type'])
-                if key in unique_key:
-                    unique_key[key]['current_records'] = position
+                if key in self.unique_key:
+                    self.unique_key[key]['current_records'] = position
                 else:
                     notcurrent.append(key)
-                    unique_key[key] = {'current_records': position, 'same': False}
+                    self.unique_key[key] = {'current_records': position, 'same': False}
 
         samecnt = 0
         lencnt = 0
         ttlcnt = 0
         reccnt = 0
-        for key in unique_key:
-            testme = unique_key[key]
+        for key in self.unique_key:
+            testme = self.unique_key[key]
             if 'current_records' in testme and 'final_records' in testme:
                 current = self.current_records[testme['current_records']]
                 final = final_records[testme['final_records']]
@@ -1125,10 +1145,10 @@ class Record(object):
                 testme['same'] = same
         #    else:
         #        pprint(qwerqwer)
-        #look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(unique_key))
+        #look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(self.unique_key))
         net_final = []
-        for key in unique_key:
-            testme = unique_key[key]
+        for key in self.unique_key:
+            testme = self.unique_key[key]
             if testme['same'] == False:
                 net_final.append(final_records[testme['final_records']])
         return net_final
@@ -1173,7 +1193,8 @@ class Record(object):
                 return {'status': 'ok', 'msg': 'Auto-PTR record was updated successfully'}
             except Exception as e:
                 logging.error("Cannot update auto-ptr record changes to domain %s. DETAIL: %s" % (str(e), domain))
-                return {'status': 'error', 'msg': 'Auto-PTR creation failed. There was something wrong, please contact administrator.'}
+                return {'status': 'error',
+                        'msg': 'Auto-PTR creation failed. There was something wrong, please contact administrator.'}
 
     def delete(self, domain):
         """
@@ -1192,7 +1213,8 @@ class Record(object):
                 ]
             }
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain), headers=headers, method='PATCH', data=data)
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
             logging.debug(jdata)
             return {'status': 'ok', 'msg': 'Record was removed successfully'}
         except:
@@ -1321,12 +1343,36 @@ class History(db.Model):
     detail = db.Column(db.Text().with_variant(db.Text(length=2**24-2), 'mysql'))
     created_by = db.Column(db.String(128))
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
+    name = db.Column(db.String(255))
+    changetype = db.Column(db.String(32))
+    fromdata = db.Column(JSON)
+    todata = db.Column(JSON)
+    domain = db.Column(db.Integer)
 
-    def __init__(self, id=None, msg=None, detail=None, created_by=None):
+    def __init__(self, id=None, msg=None, detail=None, created_by=None, name=None, changetype=None, fromdata=None,
+                 todata=None, domain=None):
+        domainid = None
+        if domain:
+            mdl = db.session.query(Domain.id)\
+                    .filter(Domain.name == domain)\
+                    .first()
+            domainid = None
+            if mdl:
+                domainid = mdl.id
+        if not changetype and 'changetype' in todata:
+            changetype = todata['changetype']
+        if not name and 'name' in todata:
+            name = todata['name']
+
         self.id = id
         self.msg = msg
         self.detail = detail
         self.created_by = created_by
+        self.name = name
+        self.changetype = changetype
+        self.fromdata = fromdata
+        self.todata = todata
+        self.domain = domainid
 
     def __repr__(self):
         return '<History %r>' % (self.msg)

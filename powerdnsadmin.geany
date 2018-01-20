@@ -20,19 +20,15 @@ file_patterns=
 
 [long line marker]
 long_line_behaviour=2
-long_line_column=79
+long_line_column=120
 
 [files]
-current_page=3
-FILE_NAME_0=47881;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fmodels.py;0;4
-FILE_NAME_1=9492;HTML;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Ftemplates%2Fdomain.html;0;4
-FILE_NAME_2=9672;HTML;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Ftemplates%2Fbase.html;0;4
-FILE_NAME_3=16709;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fviews.py;0;4
-FILE_NAME_4=2763;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fstatic%2Fcustom%2Fjs%2Fcustom.js;0;4
-FILE_NAME_5=1049;Javascript;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fstatic%2Fcustom%2Fjs%2Fdebug.js;0;4
+current_page=1
+FILE_NAME_0=42476;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fmodels.py;0;4
+FILE_NAME_1=16804;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fviews.py;0;4
 
 [VTE]
-last_dir=/home/dbartley
+last_dir=/home/dbartley/projects/PowerDNS-Admin
 
 [build-menu]
 PythonFT_01_LB=check
