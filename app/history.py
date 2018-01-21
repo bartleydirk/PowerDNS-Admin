@@ -8,6 +8,7 @@ from flask import request, render_template, make_response, jsonify
 from app import app, db
 # pylint: disable=E0401
 from app.models import History, Domain
+# from distutils.util import strtobool
 
 
 # @admin_role_required
@@ -35,12 +36,11 @@ def admin_history():
                       .outerjoin(Domain, Domain.id == History.domain)
         if name:
             histories = histories.filter(History.name == '%s.' % (name))
-        #if domain:
-        #    sqry = db.session.query(Domain.id)\
-        #             .filter(Domain.name == domain)\
-        #             .first()
-        #    histories = histories.filter(History.domain == sqry)
-        #pprint(asdf)
+        if domain:
+            sqry = db.session.query(Domain.id)\
+                     .filter(Domain.name == domain)\
+                     .first()
+            histories = histories.filter(History.domain == sqry)
         histories = histories.all()
         retval = render_template('admin_history.html', histories=histories)
     return retval
