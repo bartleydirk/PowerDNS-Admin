@@ -1,4 +1,6 @@
-{% extends "base.html" %} {% block title %}
+{% extends "base.html" %}
+
+{% block title %}
 <title>DNS Control Panel - History</title>
 {% endblock %} {% block dashboard_stat %}
 <!-- Content Header (Page header) -->
@@ -12,7 +14,10 @@
         <li class="active">History</li>
     </ol>
 </section>
-{% endblock %} {% block content %}
+{% endblock %}
+
+
+{% block content %}
 <section class="content">
     <div class="row">
         <div class="col-xs-12">
@@ -20,11 +25,11 @@
                 <div class="box-header">
                     <h3 class="box-title">History Management</h3>
                 </div>
-                <div class="box-body clearfix">
+                <!-- <div class="box-body clearfix">
                     <button type="button" class="btn btn-flat btn-danger pull-right" data-toggle="modal" data-target="#modal_clear_history">
                         Clear History&nbsp;<i class="fa fa-trash"></i>
                     </button>
-                </div>
+                </div> -->
                 <div class="box-body">
                     <table id="tbl_history" class="table table-bordered table-striped">
                         <thead>
@@ -32,7 +37,10 @@
                                 <th>Changed by</th>
                                 <th>Content</th>
                                 <th>Time</th>
-                                <th>Detail</th>
+                                <th>host</th>
+                                <th>domain</th>
+                                <th>Change</th>
+                                <th>Info</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -41,11 +49,13 @@
                                 <td>{{ history.created_by }}</td>
                                 <td>{{ history.msg }}</td>
                                 <td>{{ history.created_on }}</td>
+                                <td>{{ history.name }}</td>
+                                <td>{{ history.domainname }}</td>
+                                <td>{{ history.changetype }}</td>
                                 <td width="6%">
-                                    <button type="button" class="btn btn-flat btn-primary history-info-button" value='{{ history.detail }}'>Info&nbsp;<i class="fa fa-info"></i>
-                                    </button>
+                                    <button type="button" class="btn btn-flat btn-primary history-info-button" value='{{ history.id }}'>Info&nbsp;<i class="fa fa-info"></i></button>
                                 </td>
-                            </tr>
+                            </tr>Time
                             {% endfor %}
                         </tbody>
                     </table>
@@ -59,6 +69,8 @@
     <!-- /.row -->
 </section>
 {% endblock %} 
+
+
 {% block extrascripts %}
 <script>
     // set up history data table
@@ -71,14 +83,45 @@
         "autoWidth" : false
     });
     $(document.body).on('click', '.history-info-button', function() {
-        var modal = $("#modal_history_info");
-        var info = $(this).val();
-        console.log('history-info-button the info be "' + info + '"');
-        $('#modal-code-content').html(json_library.prettyPrint(info));
-        modal.modal('show');
+        
+        var historyid = $(this).val();
+
+        senddata = {'historyid': historyid}
+        $.ajax({
+            type : "POST",
+            url : "{{ url_for('history_info') }}",
+            data : senddata,
+            //contentType : "application/json; charset=utf-8",
+            crossDomain : true,
+            dataType : "json",
+
+            success : function(retdat) {
+                console.log("In Success " + historyid + " " + retdat.status)
+                console.log("In Success " + retdat.retval)
+                var modal = $("#modal_history_info");
+                var show = JSON.stringify(retdat.retval, null, '\t');
+                //json_library.prettyPrint(retdat.retval)
+                $('#modal-code-content').html(show);
+                modal.modal('show');
+                //if (showResult) {
+                //    var modal = $("#modal_success");
+                //    modal.find('.modal-body p').text("Applied changes successfully");
+                //    modal.modal('show');
+                //}
+                //if (refreshPage) {
+                //    location.reload(true);
+                //}
+            }
+        });
+
+        console.log('history-info-button the historyid be "' + historyid + '"');
+        //$('#modal-code-content').html(json_library.prettyPrint(info));
+        //modal.modal('show');
     });
 </script>
 {% endblock %} 
+
+
 {% block modals %}
 <!-- Clear History Confirmation Box -->
 <div class="modal fade modal-warning" id="modal_clear_history">

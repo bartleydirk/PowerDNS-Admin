@@ -23,9 +23,10 @@ long_line_behaviour=2
 long_line_column=120
 
 [files]
-current_page=1
-FILE_NAME_0=42476;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fmodels.py;0;4
-FILE_NAME_1=16804;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fviews.py;0;4
+current_page=2
+FILE_NAME_0=1235;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2F__init__.py;0;4
+FILE_NAME_1=44687;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fmodels.py;0;4
+FILE_NAME_2=14096;Python;0;EUTF-8;0;1;0;%2Fhome%2Fdbartley%2Fprojects%2FPowerDNS-Admin%2Fapp%2Fviews.py;0;4
 
 [VTE]
 last_dir=/home/dbartley/projects/PowerDNS-Admin

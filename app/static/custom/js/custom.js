@@ -1,8 +1,8 @@
 function applyChanges(data, url, showResult, refreshPage) {
     var success = false;
     console.log('applyChanges url is "' + url + '"');
-    strng = object_to_debugstring(data);
-    console.log('applyChanges data is :\n"' + strng + '"');
+    //strng = object_to_debugstring(data);
+    //console.log('applyChanges data is :\n"' + strng + '"');
     var postdata = JSON.stringify(data);
     var ntdata = {'postdata': postdata}
     $.ajax({

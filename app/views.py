@@ -17,7 +17,7 @@ from werkzeug import secure_filename
 from werkzeug.security import gen_salt
 
 from .models import User, Domain, Record, Server, History, Anonymous, Setting, DomainSetting
-from app import app, login_manager, github
+from app import app, login_manager, github, db
 from lib import utils
 
 
@@ -322,7 +322,21 @@ def domain(domain_name):
             editable_records = app.config['RECORDS_ALLOW_EDIT']
         else:
             editable_records = ['PTR']
-        return render_template('domain.html', domain=domain, records=records, editable_records=editable_records)
+        sqry = db.session.query(Domain.id)\
+                 .filter(Domain.name == domain.name)\
+                 .first()
+        hqry = db.session.query(db.func.REPLACE(History.name, "\.$", "").label('name'),
+                                db.func.count().label('count'))\
+                 .filter(History.domain == sqry)\
+                 .group_by(History.name)\
+                 .all()
+        lastdot = re.compile('\.$')
+        hdict = {}
+        for item in hqry:
+            name = lastdot.sub('', item.name)
+            hdict[name] = item.count
+        return render_template('domain.html', domain=domain, records=records, editable_records=editable_records,
+                               hdict=hdict)
     else:
         return redirect(url_for('error', code=404))
 
@@ -616,25 +630,6 @@ def admin_manageuser():
             print traceback.format_exc()
             return make_response(jsonify( { 'status': 'error', 'msg': 'There is something wrong, please contact Administrator.' } ), 400)
 
-
-@app.route('/admin/history', methods=['GET', 'POST'])
-@login_required
-@admin_role_required
-def admin_history():
-    if request.method == 'POST':
-        h = History()
-        result = h.remove_all()
-        if result:
-            history = History(msg='Remove all histories', created_by=current_user.username)
-            history.add()
-
-            return make_response(jsonify( { 'status': 'ok', 'msg': 'Changed user role successfully.' } ), 200)
-        else:
-            return make_response(jsonify( { 'status': 'error', 'msg': 'Can not remove histories.' } ), 500)
-
-    if request.method == 'GET':
-        histories = History.query.all()
-        return render_template('admin_history.html', histories=histories)
 
 @app.route('/admin/settings', methods=['GET'])
 @login_required

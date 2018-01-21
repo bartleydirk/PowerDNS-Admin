@@ -15,7 +15,7 @@ db = SQLAlchemy(app)
 from ConfigParser import RawConfigParser
 
 
-class SchuParser(RawConfigParser):
+class PdnsParser(RawConfigParser):
     """
     A class to inherit from RawConfigParser and have safe methods to get values
     So that the config file can not have the value and there will be a default
@@ -40,7 +40,7 @@ def get_version(infile):
     exepth = os.path.dirname(os.path.realpath(__file__))
     pth = os.path.join(os.path.dirname( __file__ ), '..')
     cnfgfle = '%s/versions.cfg' % os.path.abspath(pth)
-    confg = SchuParser()
+    confg = PdnsParser()
     confg.read(cnfgfle)
     return confg.safe_get('vers', infile, 1)
 
@@ -95,4 +95,4 @@ def enable_github_oauth(GITHUB_ENABLE):
 oauth, github = enable_github_oauth(app.config.get('GITHUB_OAUTH_ENABLE'))
 
 
-from app import views, models
+from app import views, models, history

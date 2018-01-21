@@ -49,6 +49,7 @@
                                 <th>Edit</th>
                                 <th>Delete</th>
                                 <th>sort</th>
+                                <th>Hisotry</th>
                                 <!-- <th>changed</th> -->
                             </tr>
                         </thead>
@@ -95,6 +96,7 @@
                                     </td>
                                     <!-- hidden column that we can sort on -->
                                     <td>1</td>
+                                    <td>{% if record.name in hdict %}<a href="{{ url_for('admin_history', domain=domain.name, name=record.name)}}">{{ hdict[record.name] }}</a>{% endif %}</td>
                                     <!-- hidden column that we can identify as changed <td>0</td> -->
                                 </tr>
                                 {% endfor %}
@@ -146,7 +148,7 @@
             {
                 // hidden column so that we can add new records on top
                 // regardless of whatever sorting is done
-                visible: true,
+                visible: false,
                 targets: [ 7 ]
             }
         ],
