@@ -28,3 +28,4 @@ db_repository/*
 upload/avatar/*
 tmp/*
 .ropeproject
+*.geany
