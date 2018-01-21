@@ -1,3 +1,7 @@
+"""
+module to contain sqlalchemy models
+"""
+
 import os
 import ldap
 import time
@@ -46,19 +50,20 @@ PDNS_VERSION = app.config['PDNS_VERSION']
 API_EXTENDED_URL = utils.pdns_api_extended_uri(PDNS_VERSION)
 
 # Flag for pdns v4.x.x
-# TODO: Find another way to do this
+# Find another way to do this
 if StrictVersion(PDNS_VERSION) >= StrictVersion('4.0.0'):
     NEW_SCHEMA = True
 else:
     NEW_SCHEMA = False
 
+
 class Anonymous(AnonymousUserMixin):
-  def __init__(self):
-    self.username = 'Anonymous'
+    def __init__(self):
+        self.username = 'Anonymous'
 
 
 class User(db.Model):
-
+    """sqlalchmy model for a user"""
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
     password = db.Column(db.String(64))
@@ -69,7 +74,8 @@ class User(db.Model):
     otp_secret = db.Column(db.String(16))
     role_id = db.Column(db.Integer, db.ForeignKey('role.id'))
 
-    def __init__(self, id=None, username=None, password=None, plain_text_password=None, firstname=None, lastname=None, role_id=None, email=None, avatar=None, otp_secret=None, reload_info=True):
+    def __init__(self, id=None, username=None, password=None, plain_text_password=None, firstname=None, lastname=None,
+                 role_id=None, email=None, avatar=None, otp_secret=None, reload_info=True):
         self.id = id
         self.username = username
         self.password = password
@@ -142,29 +148,29 @@ class User(db.Model):
 
         try:
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-            l = ldap.initialize(LDAP_URI)
-            l.set_option(ldap.OPT_REFERRALS, 0)
-            l.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-            l.set_option(ldap.OPT_X_TLS,ldap.OPT_X_TLS_DEMAND)
-            l.set_option( ldap.OPT_X_TLS_DEMAND, True )
-            l.set_option( ldap.OPT_DEBUG_LEVEL, 255 )
-            l.protocol_version = ldap.VERSION3
+            ldp = ldap.initialize(LDAP_URI)
+            ldp.set_option(ldap.OPT_REFERRALS, 0)
+            ldp.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            ldp.set_option(ldap.OPT_X_TLS, ldap.OPT_X_TLS_DEMAND)
+            ldp.set_option(ldap.OPT_X_TLS_DEMAND, True)
+            ldp.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+            ldp.protocol_version = ldap.VERSION3
 
-            l.simple_bind_s(LDAP_USERNAME, LDAP_PASSWORD)
-            ldap_result_id = l.search(baseDN, searchScope, searchFilter, retrieveAttributes)
+            ldp.simple_bind_s(LDAP_USERNAME, LDAP_PASSWORD)
+            ldap_result_id = ldp.search(baseDN, searchScope, searchFilter, retrieveAttributes)
             result_set = []
             while 1:
-                result_type, result_data = l.result(ldap_result_id, 0)
-                if (result_data == []):
+                result_type, result_data = ldp.result(ldap_result_id, 0)
+                if result_data == []:
                     break
                 else:
                     if result_type == ldap.RES_SEARCH_ENTRY:
                         result_set.append(result_data)
             return result_set
 
-        except ldap.LDAPError, e:
-            logging.error(e)
-            raise
+        except ldap.LDAPError as err:
+            logging.error(err)
+            raise Exception('Ldap error!')
 
     def is_validate(self, method):
         """
@@ -190,8 +196,8 @@ class User(db.Model):
 
             searchFilter = "(&(objectcategory=person)(samaccountname=%s))" % self.username
             if LDAP_TYPE == 'ldap':
-              searchFilter = "(&(%s=%s)%s)" % (LDAP_USERNAMEFIELD, self.username, LDAP_FILTER)
-              logging.info('Ldap searchFilter "%s"' % searchFilter)
+                searchFilter = "(&(%s=%s)%s)" % (LDAP_USERNAMEFIELD, self.username, LDAP_FILTER)
+                logging.info('Ldap searchFilter "%s"' % searchFilter)
 
             result = self.ldap_search(searchFilter, LDAP_SEARCH_BASE)
             if not result:
@@ -199,17 +205,17 @@ class User(db.Model):
                 return False
 
             ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-            l = ldap.initialize(LDAP_URI)
-            l.set_option(ldap.OPT_REFERRALS, 0)
-            l.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-            l.set_option(ldap.OPT_X_TLS,ldap.OPT_X_TLS_DEMAND)
-            l.set_option( ldap.OPT_X_TLS_DEMAND, True )
-            l.set_option( ldap.OPT_DEBUG_LEVEL, 255 )
-            l.protocol_version = ldap.VERSION3
+            ldp = ldap.initialize(LDAP_URI)
+            ldp.set_option(ldap.OPT_REFERRALS, 0)
+            ldp.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+            ldp.set_option(ldap.OPT_X_TLS, ldap. OPT_X_TLS_DEMAND)
+            ldp.set_option(ldap.OPT_X_TLS_DEMAND, True)
+            ldp.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+            ldp.protocol_version = ldap.VERSION3
 
             try:
                 ldap_username = result[0][0][0]
-                l.simple_bind_s(ldap_username, self.password)
+                ldp.simple_bind_s(ldap_username, self.password)
                 logging.info('User "%s" logged in successfully' % self.username)
             except Exception:
                 logging.error('User "%s" input a wrong password' % self.username)
@@ -246,10 +252,9 @@ class User(db.Model):
         We will create a local user (in DB) in order to manage user
         profile such as name, roles,...
         """
-        
+
         # Set an invalid password hash for non local users
         self.password = '*'
-        
         db.session.add(self)
         db.session.commit()
 
@@ -289,11 +294,12 @@ class User(db.Model):
         user.firstname = self.firstname if self.firstname else user.firstname
         user.lastname = self.lastname if self.lastname else user.lastname
         user.email = self.email if self.email else user.email
-        user.password = self.get_hashed_password(self.plain_text_password) if self.plain_text_password else user.password
+        user.password = self.get_hashed_password(self.plain_text_password) if self.plain_text_password \
+            else user.password
         user.avatar = self.avatar if self.avatar else user.avatar
 
         user.otp_secret = ""
-        if enable_otp == True:
+        if enable_otp is True:
             # generate the opt secret key
             user.otp_secret = base64.b32encode(os.urandom(10)).decode('utf-8')
 
@@ -311,7 +317,10 @@ class User(db.Model):
         access
         """
         user_domains = []
-        query = db.session.query(User, DomainUser, Domain).filter(User.id==self.id).filter(User.id==DomainUser.user_id).filter(Domain.id==DomainUser.domain_id).all()
+        query = db.session.query(User, DomainUser, Domain) \
+                  .filter(User.id == self.id) \
+                  .filter(User.id == DomainUser.user_id) \
+                  .filter(Domain.id == DomainUser.domain_id).all()
         for q in query:
             user_domains.append(q[2])
         return user_domains
@@ -357,11 +366,11 @@ class User(db.Model):
             is_admin == False => User
         """
         user_role_name = 'Administrator' if is_admin else 'User'
-        role = Role.query.filter(Role.name==user_role_name).first()
+        role = Role.query.filter(Role.name == user_role_name).first()
 
         try:
             if role:
-                user = User.query.filter(User.username==self.username).first()
+                user = User.query.filter(User.username == self.username).first()
                 user.role_id = role.id
                 db.session.commit()
                 return True
@@ -375,7 +384,7 @@ class User(db.Model):
 
 
 class Role(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
     description = db.Column(db.String(128))
     users = db.relationship('User', backref='role', lazy='dynamic')
@@ -394,12 +403,13 @@ class Role(db.Model):
     def __repr__(self):
         return '<Role %r>' % (self.name)
 
+
 class DomainSetting(db.Model):
     __tablename__ = 'domain_setting'
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'))
     domain = db.relationship('Domain', back_populates='settings')
-    setting = db.Column(db.String(255), nullable = False)
+    setting = db.Column(db.String(255), nullable=False)
     value = db.Column(db.String(255))
 
     def __init__(self, id=None, setting=None, value=None):
@@ -424,18 +434,20 @@ class DomainSetting(db.Model):
             db.session.rollback()
             return False
 
+
 class Domain(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), index=True, unique=True)
     master = db.Column(db.String(128))
-    type = db.Column(db.String(6), nullable = False)
+    type = db.Column(db.String(6), nullable=False)
     serial = db.Column(db.Integer)
     notified_serial = db.Column(db.Integer)
     last_check = db.Column(db.Integer)
     dnssec = db.Column(db.Integer)
     settings = db.relationship('DomainSetting', back_populates='domain')
 
-    def __init__(self, id=None, name=None, master=None, type='NATIVE', serial=None, notified_serial=None, last_check=None, dnssec=None):
+    def __init__(self, id=None, name=None, master=None, type='NATIVE', serial=None, notified_serial=None,
+                 last_check=None, dnssec=None):
         self.id = id
         self.name = name
         self.master = master
@@ -453,8 +465,8 @@ class Domain(db.Model):
             self.settings.append(DomainSetting(setting=setting, value=value))
             db.session.commit()
             return True
-        except Exception, e:
-            logging.error('Can not create setting %s for domain %s. %s' % (setting, self.name, str(e)))
+        except Exception as err:
+            logging.error('Can not create setting %s for domain %s. %s' % (setting, self.name, str(err)))
             return False
 
     def get_domains(self):
@@ -478,7 +490,8 @@ class Domain(db.Model):
         """
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
-        jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'), headers=headers)
+        jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'),
+                                 headers=headers)
         return jdata
 
     def get_id_by_name(self, name):
@@ -486,7 +499,7 @@ class Domain(db.Model):
         Return domain id
         """
         try:
-            domain = Domain.query.filter(Domain.name==name).first()
+            domain = Domain.query.filter(Domain.name == name).first()
             return domain.id
         except:
             return None
@@ -497,24 +510,25 @@ class Domain(db.Model):
         """
         db_domain = Domain.query.all()
         list_db_domain = [d.name for d in db_domain]
-        dict_db_domain = dict((x.name,x) for x in db_domain)
+        dict_db_domain = dict((x.name, x) for x in db_domain)
 
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'), headers=headers)
+            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'),
+                                     headers=headers)
             list_jdomain = [d['name'].rstrip('.') for d in jdata]
             try:
                 # domains should remove from db since it doesn't exist in powerdns anymore
                 should_removed_db_domain = list(set(list_db_domain).difference(list_jdomain))
                 for d in should_removed_db_domain:
                     # revoke permission before delete domain
-                    domain = Domain.query.filter(Domain.name==d).first()
-                    domain_user = DomainUser.query.filter(DomainUser.domain_id==domain.id)
+                    domain = Domain.query.filter(Domain.name == d).first()
+                    domain_user = DomainUser.query.filter(DomainUser.domain_id == domain.id)
                     if domain_user:
                         domain_user.delete()
                         db.session.commit()
-                    domain_setting = DomainSetting.query.filter(DomainSetting.domain_id==domain.id)
+                    domain_setting = DomainSetting.query.filter(DomainSetting.domain_id == domain.id)
                     if domain_setting:
                         domain_setting.delete()
                         db.session.commit()
@@ -533,20 +547,19 @@ class Domain(db.Model):
                 changed = False
                 if d:
                     # existing domain, only update if something actually has changed
-                    if ( d.master != str(data['masters'])
-                        or d.type != data['kind']
-                        or d.serial != data['serial']
-                        or d.notified_serial != data['notified_serial']
-                        or d.last_check != ( 1 if data['last_check'] else 0 )
-                        or d.dnssec != data['dnssec'] ):
+                    tst1 = 1 if data['last_check'] else 0
+                    allsame = True
+                    if (d.master != str(data['masters']) or d.type != data['kind'] or
+                            d.serial != data['serial'] or d .notified_serial != data['notified_serial'] or
+                            d.last_check != tst1 or d.dnssec != data['dnssec']):
 
-                            d.master = str(data['masters'])
-                            d.type = data['kind']
-                            d.serial = data['serial']
-                            d.notified_serial = data['notified_serial']
-                            d.last_check = 1 if data['last_check'] else 0
-                            d.dnssec = 1 if data['dnssec'] else 0
-                            changed = True
+                        d.master = str(data['masters'])
+                        d.type = data['kind']
+                        d.serial = data['serial']
+                        d.notified_serial = data['notified_serial']
+                        d.last_check = 1 if data['last_check'] else 0
+                        d.dnssec = 1 if data['dnssec'] else 0
+                        changed = True
 
                 else:
                     # add new domain
@@ -566,8 +579,8 @@ class Domain(db.Model):
                     except:
                         db.session.rollback()
             return {'status': 'ok', 'msg': 'Domain table has been updated successfully'}
-        except Exception, e:
-            logging.error('Can not update domain table.' + str(e))
+        except Exception as err:
+            logging.error('Can not update domain table.' + str(err))
             return {'status': 'error', 'msg': 'Can not update domain table'}
 
     def add(self, domain_name, domain_type, soa_edit_api, domain_ns=[], domain_master_ips=[]):
@@ -582,56 +595,51 @@ class Domain(db.Model):
             domain_ns = [ns + '.' for ns in domain_ns]
 
         if soa_edit_api == 'OFF':
-            post_data = {
-                            "name": domain_name,
-                            "kind": domain_type,
-                            "masters": domain_master_ips,
-                            "nameservers": domain_ns,
-                        }
+            post_data = {"name": domain_name,
+                         "kind": domain_type,
+                         "masters": domain_master_ips,
+                         "nameservers": domain_ns, }
         else:
-            post_data = {
-                                "name": domain_name,
-                                "kind": domain_type,
-                                "masters": domain_master_ips,
-                                "nameservers": domain_ns,
-                                "soa_edit_api": soa_edit_api
-                            }
+            post_data = {"name": domain_name,
+                         "kind": domain_type,
+                         "masters": domain_master_ips,
+                         "nameservers": domain_ns,
+                         "soa_edit_api": soa_edit_api}
 
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'), headers=headers, method='POST', data=post_data)
+            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'),
+                                     headers=headers, method='POST', data=post_data)
             if 'error' in jdata.keys():
                 logging.error(jdata['error'])
                 return {'status': 'error', 'msg': jdata['error']}
             else:
                 logging.info('Added domain %s successfully' % domain_name)
                 return {'status': 'ok', 'msg': 'Added domain successfully'}
-        except Exception, e:
-            print traceback.format_exc()
+        except Exception as err:
             logging.error('Cannot add domain %s' % domain_name)
-            logging.debug(str(e))
+            traceback.format_exc()
+            logging.debug(str(err))
             return {'status': 'error', 'msg': 'Cannot add this domain.'}
 
     def create_reverse_domain(self, domain_name, domain_reverse_name):
         """
-        Check the existing reverse lookup domain, 
+        Check the existing reverse lookup domain,
         if not exists create a new one automatically
         """
         domain_obj = Domain.query.filter(Domain.name == domain_name).first()
-        domain_auto_ptr = DomainSetting.query.filter(DomainSetting.domain == domain_obj).filter(DomainSetting.setting == 'auto_ptr').first()
+        domain_auto_ptr = DomainSetting.query.filter(DomainSetting.domain == domain_obj) \
+                                             .filter(DomainSetting.setting == 'auto_ptr').first()
         domain_auto_ptr = strtobool(domain_auto_ptr.value) if domain_auto_ptr else False
         system_auto_ptr = Setting.query.filter(Setting.name == 'auto_ptr').first()
         system_auto_ptr = strtobool(system_auto_ptr.value)
         self.name = domain_name
         domain_id = self.get_id_by_name(domain_reverse_name)
-        if None == domain_id and \
-            (
-                system_auto_ptr or \
-                domain_auto_ptr
-            ):
+        if domain_id is None and (system_auto_ptr or domain_auto_ptr):
             result = self.add(domain_reverse_name, 'Master', 'INCEPTION-INCREMENT', '', '')
             self.update()
             if result['status'] == 'ok':
-                history = History(msg='Add reverse lookup domain %s' % domain_reverse_name, detail=str({'domain_type': 'Master', 'domain_master_ips': ''}), created_by='System')
+                history = History(msg='Add reverse lookup domain %s' % domain_reverse_name,
+                                  detail=str({'domain_type': 'Master', 'domain_master_ips': ''}), created_by='System')
                 history.add()
             else:
                 return {'status': 'error', 'msg': 'Adding reverse lookup domain failed'}
@@ -652,19 +660,21 @@ class Domain(db.Model):
     def get_reverse_domain_name(self, reverse_host_address):
         c = 1
         if re.search('ip6.arpa', reverse_host_address):
-            for i in range(1,32,1):
-                address = re.search('((([a-f0-9]\.){'+ str(i) +'})(?P<ipname>.+6.arpa)\.?)', reverse_host_address)
-                if None != self.get_id_by_name(address.group('ipname')):
+            for i in range(1, 32, 1):
+                address = re.search(r'((([a-f0-9]\.){' + str(i) + r'})(?P<ipname>.+6.arpa)\.?)', reverse_host_address)
+                if self.get_id_by_name(address.group('ipname')) is not None:
                     c = i
                     break
-            return re.search('((([a-f0-9]\.){'+ str(c) +'})(?P<ipname>.+6.arpa)\.?)', reverse_host_address).group('ipname')
+            return re.search(r'((([a-f0-9]\.){' + str(c) + r'})(?P<ipname>.+6.arpa)\.?)',
+                             reverse_host_address).group('ipname')
         else:
-            for i in range(1,4,1):
-                address = re.search('((([0-9]+\.){'+ str(i) +'})(?P<ipname>.+r.arpa)\.?)', reverse_host_address)
-                if None != self.get_id_by_name(address.group('ipname')):
+            for i in range(1, 4, 1):
+                address = re.search(r'((([0-9]+\.){' + str(i) + r'})(?P<ipname>.+r.arpa)\.?)', reverse_host_address)
+                if self.get_id_by_name(address.group('ipname')) is not None:
                     c = i
                     break
-            return re.search('((([0-9]+\.){'+ str(c) +'})(?P<ipname>.+r.arpa)\.?)', reverse_host_address).group('ipname')
+            return re.search(r'((([0-9]+\.){' + str(c) + r'})(?P<ipname>.+r.arpa)\.?)',
+                             reverse_host_address).group('ipname')
 
     def delete(self, domain_name):
         """
@@ -673,11 +683,12 @@ class Domain(db.Model):
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain_name), headers=headers, method='DELETE')
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain_name)
+            jdata = utils.fetch_json(url, headers=headers, method='DELETE')
             logging.info('Delete domain %s successfully' % domain_name)
             return {'status': 'ok', 'msg': 'Delete domain successfully'}
-        except Exception, e:
-            print traceback.format_exc()
+        except Exception as e:
+            tbck = traceback.format_exc()
             logging.error('Cannot delete domain %s' % domain_name)
             logging.debug(str(e))
             return {'status': 'error', 'msg': 'Cannot delete domain'}
@@ -687,7 +698,11 @@ class Domain(db.Model):
         Get users (id) who have access to this domain name
         """
         user_ids = []
-        query = db.session.query(DomainUser, Domain).filter(User.id==DomainUser.user_id).filter(Domain.id==DomainUser.domain_id).filter(Domain.name==self.name).all()
+        query = db.session.query(DomainUser, Domain) \
+                  .filter(User.id == DomainUser.user_id) \
+                  .filter(Domain.id == DomainUser.domain_id) \
+                  .filter(Domain.name == self.name) \
+                  .all()
         for q in query:
             user_ids.append(q[0].user_id)
         return user_ids
@@ -700,14 +715,18 @@ class Domain(db.Model):
         domain_id = self.get_id_by_name(self.name)
 
         domain_user_ids = self.get_user()
-        new_user_ids = [u.id for u in User.query.filter(User.username.in_(new_user_list)).all()] if new_user_list else []
+
+        if new_user_list:
+            new_user_ids = [u.id for u in User.query.filter(User.username.in_(new_user_list)).all()]
+        else:
+            new_user_ids = []
 
         removed_ids = list(set(domain_user_ids).difference(new_user_ids))
         added_ids = list(set(new_user_ids).difference(domain_user_ids))
 
         try:
             for uid in removed_ids:
-                DomainUser.query.filter(DomainUser.user_id == uid).filter(DomainUser.domain_id==domain_id).delete()
+                DomainUser.query.filter(DomainUser.user_id == uid).filter(DomainUser.domain_id == domain_id).delete()
                 db.session.commit()
         except:
             db.session.rollback()
@@ -722,7 +741,6 @@ class Domain(db.Model):
             db.session.rollback()
             logging.error('Cannot grant user privielges to domain %s' % self.name)
 
-
     def update_from_master(self, domain_name):
         """
         Update records from Master DNS server
@@ -732,7 +750,9 @@ class Domain(db.Model):
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
             try:
-                jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s/axfr-retrieve' % domain), headers=headers, method='PUT')
+                url = urlparse.urljoin(PDNS_STATS_URL,
+                                       API_EXTENDED_URL + '/servers/localhost/zones/%s/axfr-retrieve' % domain)
+                jdata = utils.fetch_json(url, headers=headers, method='PUT')
                 return {'status': 'ok', 'msg': 'Update from Master successfully'}
             except:
                 return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
@@ -748,7 +768,9 @@ class Domain(db.Model):
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
             try:
-                jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s/cryptokeys' % domain.name), headers=headers, method='GET')
+                url = urlparse.urljoin(PDNS_STATS_URL,
+                                       API_EXTENDED_URL + '/servers/localhost/zones/%s/cryptokeys' % domain.name)
+                jdata = utils.fetch_json(url, headers=headers, method='GET')
                 if 'error' in jdata:
                     return {'status': 'error', 'msg': 'DNSSEC is not enabled for this domain'}
                 else:
@@ -761,9 +783,9 @@ class Domain(db.Model):
 
 class DomainUser(db.Model):
     __tablename__ = 'domain_user'
-    id = db.Column(db.Integer, primary_key = True)
-    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable = False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable = False)
+    id = db.Column(db.Integer, primary_key=True)
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __init__(self, domain_id, user_id):
         self.domain_id = domain_id
@@ -793,7 +815,9 @@ class Record(object):
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain), headers=headers)
+            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL,
+                                                      API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain),
+                                     headers=headers)
         except:
             logging.error("Cannot fetch domain's record data from remote powerdns api")
             return False
@@ -802,9 +826,9 @@ class Record(object):
             rrsets = jdata['rrsets']
             for rrset in rrsets:
                 r_name = rrset['name'].rstrip('.')
-                if PRETTY_IPV6_PTR: # only if activated
-                    if rrset['type'] == 'PTR': # only ptr
-                        if 'ip6.arpa' in r_name: # only if v6-ptr
+                if PRETTY_IPV6_PTR:  # only if activated
+                    if rrset['type'] == 'PTR':  # only ptr
+                        if 'ip6.arpa' in r_name:  # only if v6-ptr
                             r_name = dns.reversename.to_address(dns.name.from_text(r_name))
 
                 rrset['name'] = r_name
@@ -824,7 +848,7 @@ class Record(object):
         check = filter(lambda check: check['name'] == self.name, records)
         if check:
             r = check[0]
-            if r['type'] in ('A', 'AAAA' ,'CNAME'):
+            if r['type'] in ('A', 'AAAA', 'CNAME'):
                 return {'status': 'error', 'msg': 'Record already exists with type "A", "AAAA" or "CNAME"'}
 
         # continue if the record is ready to be added
@@ -832,48 +856,31 @@ class Record(object):
         headers['X-API-Key'] = PDNS_API_KEY
 
         if NEW_SCHEMA:
-            data = {"rrsets": [
-                        {
-                            "name": self.name.rstrip('.') + '.',
-                            "type": self.type,
-                            "changetype": "REPLACE",
-                            "ttl": self.ttl,
-                            "records": [
-                                {
-                                    "content": self.data,
-                                    "disabled": self.status,
-                                }
-                            ]
-                        }
-                    ]
-                }
+            data = {"rrsets": [{"name": self.name.rstrip('.') + '.',
+                                "type": self.type,
+                                "changetype": "REPLACE",
+                                "ttl": self.ttl,
+                                "records": [{"content": self.data,
+                                             "disabled": self.status, }]}]}
         else:
-            data = {"rrsets": [
-                        {
-                            "name": self.name,
-                            "type": self.type,
-                            "changetype": "REPLACE",
-                            "records": [
-                                {
-                                    "content": self.data,
-                                    "disabled": self.status,
-                                    "name": self.name,
-                                    "ttl": self.ttl,
-                                    "type": self.type
-                                }
-                            ]
-                        }
-                    ]
-                }
+            data = {"rrsets": [{"name": self.name,
+                                "type": self.type,
+                                "changetype": "REPLACE",
+                                "records": [{"content": self.data,
+                                             "disabled": self.status,
+                                             "name": self.name,
+                                             "ttl": self.ttl,
+                                             "type": self.type}]}]}
 
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain), headers=headers, method='PATCH', data=data)
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
             logging.debug(jdata)
             return {'status': 'ok', 'msg': 'Record was added successfully'}
-        except Exception, e:
-            logging.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s" % (self.name, self.type, self.data, domain, str(e)))
+        except Exception as e:
+            logging.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s" %
+                          (self.name, self.type, self.data, domain, str(e)))
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
-
 
     def compare(self, domain_name, new_records):
         """
@@ -885,7 +892,7 @@ class Record(object):
 
         # convert them to list of list (just has [name, type]) instead of list of hash
         # to compare easier
-        list_current_records = [[x['name'],x['type']] for x in self.current_records]
+        list_current_records = [[x['name'], x['type']] for x in self.current_records]
         for item in self.current_records:
             if item['name'] == 'fred.spotx.tv':
                 self.fred_cur = item
@@ -897,19 +904,19 @@ class Record(object):
                 self.fred_new.append(item)
                 self.fred_pos.append(position)
 
-        list_new_records = [[x['name'],x['type']] for x in new_records]
+        list_new_records = [[x['name'], x['type']] for x in new_records]
 
         # get list of deleted records
         # they are the records which exist in list_current_records but not in list_new_records
         list_deleted_records = [x for x in list_current_records if x not in list_new_records]
 
         # convert back to list of hash
-        deleted_records = [x for x in self.current_records if [x['name'], x['type']] in list_deleted_records and x['type'] in app.config['RECORDS_ALLOW_EDIT']]
+        deleted_records = [x for x in self.current_records
+                           if [x['name'], x['type']] in list_deleted_records and
+                           x['type'] in app.config['RECORDS_ALLOW_EDIT']]
 
         # return a tuple
-        #pprint(asdf)
         return deleted_records, new_records
-
 
     def apply(self, domain, post_records):
         """
@@ -919,41 +926,35 @@ class Record(object):
         for r in post_records:
             r_name = domain if r['record_name'] in ['@', ''] else r['record_name'] + '.' + domain
             r_type = r['record_type']
-            if PRETTY_IPV6_PTR: # only if activated
-                if NEW_SCHEMA: # only if new schema
-                    if r_type == 'PTR': # only ptr
-                        if ':' in r['record_name']: # dirty ipv6 check
+            if PRETTY_IPV6_PTR:  # only if activated
+                if NEW_SCHEMA:  # only if new schema
+                    if r_type == 'PTR':  # only ptr
+                        if ':' in r['record_name']:  # dirty ipv6 check
                             r_name = r['record_name']
-            
-            record = {
-                        "name": r_name,
-                        "type": r_type,
-                        "content": r['record_data'],
-                        "disabled": True if r['record_status'] == 'Disabled' else False,
-                        "ttl": int(r['record_ttl']) if r['record_ttl'] else 3600,
-                    }
+
+            record = {"name": r_name,
+                      "type": r_type,
+                      "content": r['record_data'],
+                      "disabled": True if r['record_status'] == 'Disabled' else False,
+                      "ttl": int(r['record_ttl']) if r['record_ttl'] else 3600, }
             records.append(record)
-        
+
         deleted_records, new_records = self.compare(domain, records)
-        #pprint(asdf)
 
         records = []
         for r in deleted_records:
             r_name = r['name'].rstrip('.') + '.' if NEW_SCHEMA else r['name']
             r_type = r['type']
-            if PRETTY_IPV6_PTR: # only if activated
-                if NEW_SCHEMA: # only if new schema
-                    if r_type == 'PTR': # only ptr
-                        if ':' in r['name']: # dirty ipv6 check
+            if PRETTY_IPV6_PTR:  # only if activated
+                if NEW_SCHEMA:  # only if new schema
+                    if r_type == 'PTR':  # only ptr
+                        if ':' in r['name']:  # dirty ipv6 check
                             r_name = dns.reversename.from_address(r['name']).to_text()
-                            
-            record = {
-                        "name": r_name,
-                        "type": r_type,
-                        "changetype": "DELETE",
-                        "records": [
-                        ]
-                    }
+
+            record = {"name": r_name,
+                      "type": r_type,
+                      "changetype": "DELETE",
+                      "records": [], }
             records.append(record)
 
         postdata_for_delete = {"rrsets": records}
@@ -963,63 +964,52 @@ class Record(object):
             if NEW_SCHEMA:
                 r_name = r['name'].rstrip('.') + '.'
                 r_type = r['type']
-                if PRETTY_IPV6_PTR: # only if activated
-                    if r_type == 'PTR': # only ptr
-                        if ':' in r['name']: # dirty ipv6 check
+                if PRETTY_IPV6_PTR:  # only if activated
+                    if r_type == 'PTR':  # only ptr
+                        if ':' in r['name']:  # dirty ipv6 check
                             r_name = r['name']
 
-                record = {
-                            "name": r_name,
-                            "type": r_type,
-                            "changetype": "REPLACE",
-                            "ttl": r['ttl'],
-                            "records": [
-                                {
-                                    "content": r['content'],
-                                    "disabled": r['disabled'],
-                                }
-                            ]
-                        }
+                record = {"name": r_name,
+                          "type": r_type,
+                          "changetype": "REPLACE",
+                          "ttl": r['ttl'],
+                          "records": [{"content": r['content'],
+                                       "disabled": r['disabled'], }]}
             else:
-                record = {
-                            "name": r['name'],
-                            "type": r['type'],
-                            "changetype": "REPLACE",
-                            "records": [
-                                {
-                                    "content": r['content'],
-                                    "disabled": r['disabled'],
-                                    "name": r['name'],
-                                    "ttl": r['ttl'],
-                                    "type": r['type'],
-                                    "priority": 10, # priority field for pdns 3.4.1. https://doc.powerdns.com/md/authoritative/upgrading/
-                                }
-                            ]
-                        }
+                # priority field for pdns 3.4.1.
+                # https://doc.powerdns.com/md/authoritative/upgrading/
+                record = {"name": r['name'],
+                          "type": r['type'],
+                          "changetype": "REPLACE",
+                          "records": [{"content": r['content'],
+                                       "disabled": r['disabled'],
+                                       "name": r['name'],
+                                       "ttl": r['ttl'],
+                                       "type": r['type'],
+                                       "priority": 10, }]}
 
             records.append(record)
 
-        # Adjustment to add multiple records which described in https://github.com/ngoduykhanh/PowerDNS-Admin/issues/5#issuecomment-181637576
+        # Adjustment to add multiple records which described in
+        # https://github.com/ngoduykhanh/PowerDNS-Admin/issues/5#issuecomment-181637576
         final_records = []
-        records = sorted(records, key = lambda item: (item["name"], item["type"], item["changetype"]))
+        records = sorted(records, key=lambda item: (item["name"], item["type"], item["changetype"]))
         for key, group in itertools.groupby(records, lambda item: (item["name"], item["type"], item["changetype"])):
             if NEW_SCHEMA:
                 r_name = key[0]
                 r_type = key[1]
                 r_changetype = key[2]
-                
-                if PRETTY_IPV6_PTR: # only if activated
-                    if r_type == 'PTR': # only ptr
-                        if ':' in r_name: # dirty ipv6 check
+
+                if PRETTY_IPV6_PTR:  # only if activated
+                    if r_type == 'PTR':  # only ptr
+                        if ':' in r_name:  # dirty ipv6 check
                             r_name = dns.reversename.from_address(r_name).to_text()
-                
-                new_record = {
-                        "name": r_name,
-                        "type": r_type,
-                        "changetype": r_changetype,
-                        "ttl": None,
-                        "records": []
-                    }
+
+                new_record = {"name": r_name,
+                              "type": r_type,
+                              "changetype": r_changetype,
+                              "ttl": None,
+                              "records": [], }
                 for item in group:
                     temp_content = item['records'][0]['content']
                     temp_disabled = item['records'][0]['disabled']
@@ -1037,25 +1027,19 @@ class Record(object):
 
             else:
 
-                final_records.append({
-                        "name": key[0],
-                        "type": key[1],
-                        "changetype": key[2],
-                        "records": [
-                            {
-                                "content": item['records'][0]['content'],
-                                "disabled": item['records'][0]['disabled'],
-                                "name": key[0],
-                                "ttl": item['records'][0]['ttl'],
-                                "type": key[1],
-                                "priority": 10,
-                            } for item in group
-                        ]
-                    })
+                final_records.append({"name": key[0],
+                                      "type": key[1],
+                                      "changetype": key[2],
+                                      "records": [{"content": item['records'][0]['content'],
+                                                   "disabled": item['records'][0]['disabled'],
+                                                   "name": key[0],
+                                                   "ttl": item['records'][0]['ttl'],
+                                                   "type": key[1],
+                                                   "priority": 10, } for item in group]})
 
         postdata_for_new = {"rrsets": self.final_records_limit(final_records)}
 
-        #try:
+        # try:
         if True:
             # move this to after fetch_jason
             headers = {}
@@ -1074,14 +1058,14 @@ class Record(object):
                 self.history_log(final_records, domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
 
-        #except Exception, e:
+        # except Exception, e:
         #    logging.error("Cannot apply record changes to domain %s. DETAIL: %s" % (str(e), domain))
         #    return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def history_log(self, final_records, domain_name):
         for key in self.unique_key:
             testme = self.unique_key[key]
-            if testme['same'] == False:
+            if not testme['same']:
                 current = self.current_records[testme['current_records']]
                 final = final_records[testme['final_records']]
                 jdata = ''
@@ -1145,11 +1129,11 @@ class Record(object):
                 testme['same'] = same
         #    else:
         #        pprint(qwerqwer)
-        #look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(self.unique_key))
+        # look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(self.unique_key))
         net_final = []
         for key in self.unique_key:
             testme = self.unique_key[key]
-            if testme['same'] == False:
+            if testme['same'] is False:
                 net_final.append(final_records[testme['final_records']])
         return net_final
 
@@ -1158,7 +1142,9 @@ class Record(object):
         Add auto-ptr records
         """
         domain_obj = Domain.query.filter(Domain.name == domain).first()
-        domain_auto_ptr = DomainSetting.query.filter(DomainSetting.domain == domain_obj).filter(DomainSetting.setting == 'auto_ptr').first()
+        domain_auto_ptr = DomainSetting.query.filter(DomainSetting.domain == domain_obj) \
+                                             .filter(DomainSetting.setting == 'auto_ptr') \
+                                             .first()
         domain_auto_ptr = strtobool(domain_auto_ptr.value) if domain_auto_ptr else False
 
         system_auto_ptr = Setting.query.filter(Setting.name == 'auto_ptr').first()
@@ -1202,16 +1188,10 @@ class Record(object):
         """
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
-        data = {"rrsets": [
-                    {
-                        "name": self.name.rstrip('.') + '.',
-                        "type": self.type,
-                        "changetype": "DELETE",
-                        "records": [
-                        ]
-                    }
-                ]
-            }
+        data = {"rrsets": [{"name": self.name.rstrip('.') + '.',
+                            "type": self.type,
+                            "changetype": "DELETE",
+                            "records": [], }]}
         try:
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
             jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
@@ -1253,46 +1233,30 @@ class Record(object):
         headers['X-API-Key'] = PDNS_API_KEY
 
         if NEW_SCHEMA:
-            data = {"rrsets": [
-                        {
-                            "name": self.name + '.',
-                            "type": self.type,
-                            "ttl": self.ttl,
-                            "changetype": "REPLACE",
-                            "records": [
-                                {
-                                    "content": content,
-                                    "disabled": self.status,
-                                }
-                            ]
-                        }
-                    ]
-                }
+            data = {"rrsets": [{"name": self.name + '.',
+                                "type": self.type,
+                                "ttl": self.ttl,
+                                "changetype": "REPLACE",
+                                "records": [{"content": content,
+                                             "disabled": self.status, }]}]}
         else:
-            data = {"rrsets": [
-                        {
-                            "name": self.name,
-                            "type": self.type,
-                            "changetype": "REPLACE",
-                            "records": [
-                                {
-                                    "content": content,
-                                    "disabled": self.status,
-                                    "name": self.name,
-                                    "ttl": self.ttl,
-                                    "type": self.type,
-                                    "priority": 10
-                                }
-                            ]
-                        }
-                    ]
-                }
+            data = {"rrsets": [{"name": self.name,
+                                "type": self.type,
+                                "changetype": "REPLACE",
+                                "records": [{"content": content,
+                                             "disabled": self.status,
+                                             "name": self.name,
+                                             "ttl": self.ttl,
+                                             "type": self.type,
+                                             "priority": 10, }]}]}
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain), headers=headers, method='PATCH', data=data)
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
             logging.debug("dyndns data: " % data)
             return {'status': 'ok', 'msg': 'Record was updated successfully'}
-        except Exception, e:
-            logging.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s" % (self.name, self.type, self.data, domain, str(e)))
+        except Exception as e:
+            logging.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s" %
+                          (self.name, self.type, self.data, domain, str(e)))
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
 
@@ -1307,14 +1271,13 @@ class Server(object):
         self.server_config = server_config
 
     def get_config(self):
-        """
-        Get server config
-        """
+        """Get server config"""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
 
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/%s/config' % self.server_id), headers=headers, method='GET')
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/%s/config' % self.server_id)
+            jdata = utils.fetch_json(url, headers=headers, method='GET')
             return jdata
         except:
             logging.error("Can not get server configuration.")
@@ -1329,7 +1292,8 @@ class Server(object):
         headers['X-API-Key'] = PDNS_API_KEY
 
         try:
-            jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/%s/statistics' % self.server_id), headers=headers, method='GET')
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/%s/statistics' % self.server_id)
+            jdata = utils.fetch_json(url, headers=headers, method='GET')
             return jdata
         except:
             logging.error("Can not get server statistics.")
@@ -1338,9 +1302,9 @@ class Server(object):
 
 
 class History(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     msg = db.Column(db.String(256))
-    detail = db.Column(db.Text().with_variant(db.Text(length=2**24-2), 'mysql'))
+    detail = db.Column(db.Text().with_variant(db.Text(length=2 ** 24 - 2), 'mysql'))
     created_by = db.Column(db.String(128))
     created_on = db.Column(db.DateTime, default=datetime.utcnow)
     name = db.Column(db.String(255))
@@ -1403,8 +1367,9 @@ class History(db.Model):
             logging.debug(traceback.format_exc())
             return False
 
+
 class Setting(db.Model):
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
     value = db.Column(db.String(256))
 
@@ -1424,7 +1389,7 @@ class Setting(db.Model):
         mode = True/False
         """
         mode = str(mode)
-        maintenance = Setting.query.filter(Setting.name=='maintenance').first()
+        maintenance = Setting.query.filter(Setting.name == 'maintenance').first()
         try:
             if maintenance:
                 if maintenance.value != mode:
@@ -1444,7 +1409,7 @@ class Setting(db.Model):
 
     def toggle(self, setting):
         setting = str(setting)
-        current_setting = Setting.query.filter(Setting.name==setting).first()
+        current_setting = Setting.query.filter(Setting.name == setting).first()
         try:
             if current_setting:
                 if current_setting.value == "True":
@@ -1465,7 +1430,7 @@ class Setting(db.Model):
     def set(self, setting, value):
         setting = str(setting)
         new_value = str(value)
-        current_setting = Setting.query.filter(Setting.name==setting).first()
+        current_setting = Setting.query.filter(Setting.name == setting).first()
         try:
             if current_setting:
                 current_setting.value = new_value
