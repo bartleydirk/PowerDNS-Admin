@@ -1,9 +1,20 @@
+"""
+Application for managing Power Dns via API protocol
+"""
+
+import os
+from distutils.version import StrictVersion
+
+from ConfigParser import RawConfigParser
+from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager
 from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask, request, session, redirect, url_for
-from flask_login import LoginManager
-from flask_sqlalchemy import SQLAlchemy
-import os
 
+from app import base, views, models, history
+from .base import PDNS_VERSION
+
+# pylint: disable=C0103
 app = Flask(__name__)
 app.config.from_object('config')
 app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -11,8 +22,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 db = SQLAlchemy(app)
-
-from ConfigParser import RawConfigParser
+NEW_SCHEMA = bool(StrictVersion(PDNS_VERSION) >= StrictVersion('4.0.0'))
 
 
 class PdnsParser(RawConfigParser):
@@ -22,23 +32,27 @@ class PdnsParser(RawConfigParser):
     """
     def safe_get(self, section, option, default=None):
         """ Safe Get Method """
+        retval = None
         if self.has_option(section, option):
-            return self.get(section, option)
+            retval = self.get(section, option)
         else:
-            return default
+            retval = default
+        return retval
 
     def safe_getboolean(self, section, option, default=False):
         """ Safe Get a boolean value Method """
+        retval = None
         if self.has_option(section, option):
-            return self.getboolean(section, option)
+            retval = self.getboolean(section, option)
         else:
-            return default
+            retval = default
+        return retval
 
 
 def get_version(infile):
     """ We wanna return the value in the constant dictionary """
-    exepth = os.path.dirname(os.path.realpath(__file__))
-    pth = os.path.join(os.path.dirname( __file__ ), '..')
+    # exepth = os.path.dirname(os.path.realpath(__file__))
+    pth = os.path.join(os.path.dirname(__file__), '..')
     cnfgfle = '%s/versions.cfg' % os.path.abspath(pth)
     confg = PdnsParser()
     confg.read(cnfgfle)
@@ -47,6 +61,7 @@ def get_version(infile):
 
 @app.context_processor
 def utility_processor():
+    """Method for easing browser loading of changed css and js files"""
     def url_for_static(file_name):
         """ Returns the url for a static file and appends a version parameter if one exists """
         basename = os.path.basename(file_name)
@@ -58,11 +73,13 @@ def utility_processor():
 
 
 def enable_github_oauth(GITHUB_ENABLE):
+    """Enable Github Authorization"""
+    # pylint: disable=W0612
     if not GITHUB_ENABLE:
         return None, None
     from flask_oauthlib.client import OAuth
-    oauth = OAuth(app)
-    github = oauth.remote_app(
+    oauth_ = OAuth(app)
+    github_ = oauth_.remote_app(
         'github',
         consumer_key=app.config['GITHUB_OAUTH_KEY'],
         consumer_secret=app.config['GITHUB_OAUTH_SECRET'],
@@ -76,8 +93,9 @@ def enable_github_oauth(GITHUB_ENABLE):
 
     @app.route('/user/authorized')
     def authorized():
+        """Is the user autorized, redirect if not"""
         session['github_oauthredir'] = url_for('.authorized', _external=True)
-        resp = github.authorized_response()
+        resp = github_.authorized_response()
         if resp is None:
             return 'Access denied: reason=%s error=%s' % (
                 request.args['error'],
@@ -88,11 +106,10 @@ def enable_github_oauth(GITHUB_ENABLE):
 
     @github.tokengetter
     def get_github_oauth_token():
+        """Helper to get token"""
         return session.get('github_token')
 
-    return oauth, github
+    return oauth_, github_
+
 
 oauth, github = enable_github_oauth(app.config.get('GITHUB_OAUTH_ENABLE'))
-
-
-from app import views, models, history
