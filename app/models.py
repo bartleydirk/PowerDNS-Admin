@@ -17,10 +17,10 @@ import bcrypt
 
 from sqlalchemy.dialects.mysql import JSON
 
-from app import db, NEW_SCHEMA
+from app import db
 from app.lib import utils
-from .base import LDAP_URI, LDAP_USERNAME, LDAP_PASSWORD, LDAP_TYPE, LDAP_USERNAMEFIELD, LOGGING, LDAP_FILTER, \
-    LDAP_SEARCH_BASE, PDNS_API_KEY, PDNS_STATS_URL, API_EXTENDED_URL
+from app import PDNS_STATS_URL, LDAP_URI, LDAP_USERNAME, LDAP_PASSWORD, LDAP_TYPE, LDAP_USERNAMEFIELD, LOGGING, \
+    LDAP_FILTER, LDAP_SEARCH_BASE, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA
 
 
 # pylint: disable=W0703,R1705

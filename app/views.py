@@ -23,8 +23,8 @@ from flask import g, request, make_response, jsonify, render_template, session, 
 
 from app import app, login_manager, github, db, NEW_SCHEMA
 from app.lib import utils
-from .models import User, Domain, History, Setting, DomainSetting
-from .base import Record, Server, Anonymous
+from app.models import User, Domain, History, Setting, DomainSetting
+from app.base import Record, Server, Anonymous
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name

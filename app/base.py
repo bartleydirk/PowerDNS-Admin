@@ -9,42 +9,15 @@ import traceback
 
 from distutils.util import strtobool
 
+
 import dns.reversename
 
 from flask_login import AnonymousUserMixin, current_user
 
-from app import app, db, NEW_SCHEMA
+from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
 from app.lib import utils
-from app.lib.log import logger
 from .models import History, Domain, DomainSetting, Setting
-
-
 # pylint: disable=W0703,R1705
-
-if 'LDAP_TYPE' in app.config.keys():
-    LDAP_URI = app.config['LDAP_URI']
-    LDAP_USERNAME = app.config['LDAP_USERNAME']
-    LDAP_PASSWORD = app.config['LDAP_PASSWORD']
-    LDAP_SEARCH_BASE = app.config['LDAP_SEARCH_BASE']
-    LDAP_TYPE = app.config['LDAP_TYPE']
-    LDAP_FILTER = app.config['LDAP_FILTER']
-    LDAP_USERNAMEFIELD = app.config['LDAP_USERNAMEFIELD']
-else:
-    LDAP_TYPE = False
-
-if 'PRETTY_IPV6_PTR' in app.config.keys():
-    # import dns.inet
-    # import dns.name
-    PRETTY_IPV6_PTR = app.config['PRETTY_IPV6_PTR']
-else:
-    PRETTY_IPV6_PTR = False
-
-PDNS_STATS_URL = app.config['PDNS_STATS_URL']
-PDNS_API_KEY = app.config['PDNS_API_KEY']
-PDNS_VERSION = app.config['PDNS_VERSION']
-API_EXTENDED_URL = utils.pdns_api_extended_uri(PDNS_VERSION)
-
-LOGGING = logger('MODEL', app.config['LOG_LEVEL'], app.config['LOG_FILE']).config()
 
 
 class Anonymous(AnonymousUserMixin):

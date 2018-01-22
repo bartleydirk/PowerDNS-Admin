@@ -11,10 +11,8 @@ from flask_login import LoginManager
 from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask, request, session, redirect, url_for
 
-from app import base, views, models, history
-from .base import PDNS_VERSION
 
-# pylint: disable=C0103
+# pylint: disable=C0103,C0413
 app = Flask(__name__)
 app.config.from_object('config')
 app.wsgi_app = ProxyFix(app.wsgi_app)
@@ -22,7 +20,35 @@ app.wsgi_app = ProxyFix(app.wsgi_app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 db = SQLAlchemy(app)
+
+if 'LDAP_TYPE' in app.config.keys():
+    LDAP_URI = app.config['LDAP_URI']
+    LDAP_USERNAME = app.config['LDAP_USERNAME']
+    LDAP_PASSWORD = app.config['LDAP_PASSWORD']
+    LDAP_SEARCH_BASE = app.config['LDAP_SEARCH_BASE']
+    LDAP_TYPE = app.config['LDAP_TYPE']
+    LDAP_FILTER = app.config['LDAP_FILTER']
+    LDAP_USERNAMEFIELD = app.config['LDAP_USERNAMEFIELD']
+else:
+    LDAP_TYPE = False
+
+if 'PRETTY_IPV6_PTR' in app.config.keys():
+    # import dns.inet
+    # import dns.name
+    PRETTY_IPV6_PTR = app.config['PRETTY_IPV6_PTR']
+else:
+    PRETTY_IPV6_PTR = False
+
+PDNS_STATS_URL = app.config['PDNS_STATS_URL']
+PDNS_API_KEY = app.config['PDNS_API_KEY']
+PDNS_VERSION = app.config['PDNS_VERSION']
+
 NEW_SCHEMA = bool(StrictVersion(PDNS_VERSION) >= StrictVersion('4.0.0'))
+
+from app.lib import utils
+from app.lib.log import logger
+LOGGING = logger('MODEL', app.config['LOG_LEVEL'], app.config['LOG_FILE']).config()
+API_EXTENDED_URL = utils.pdns_api_extended_uri(PDNS_VERSION)
 
 
 class PdnsParser(RawConfigParser):
@@ -113,3 +139,4 @@ def enable_github_oauth(GITHUB_ENABLE):
 
 
 oauth, github = enable_github_oauth(app.config.get('GITHUB_OAUTH_ENABLE'))
+from app import base, models, views, history

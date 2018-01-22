@@ -2,7 +2,6 @@
 History View
 """
 
-
 from flask_login import current_user, login_required
 from flask import request, render_template, make_response, jsonify
 from app import app, db
