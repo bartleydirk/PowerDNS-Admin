@@ -150,17 +150,17 @@
                 // regardless of whatever sorting is done
                 visible: false,
                 targets: [ 7 ]
+            },
+            {
+                // History Link Column
+                visible: true,
+                type: 'natural',
+                targets: [ 8 ]
             }
         ],
         "orderFixed": [[7, 'asc']]
     });
-    //,
-            //{
-                //// hidden column so that we can add new records on top
-                //// regardless of whatever sorting is done
-                //visible: true,
-                //targets: [ 8 ]
-            //}
+
     // handle delete button
     $(document.body).on("click", ".button_delete", function(e) {
         console.log('.button_delete');
@@ -244,7 +244,7 @@
             
             // add new row
             var default_type = records_allow_edit[0]
-            var nRow = jQuery('#tbl_records').dataTable().fnAddData(['', default_type, 'Active', 3600, '', '', '', '0']);
+            var nRow = jQuery('#tbl_records').dataTable().fnAddData(['', default_type, 'Active', 3600, '', '', '', '0', '']);
             editRow($("#tbl_records").DataTable(), nRow);
             document.getElementById("edit-row-focus").focus();
             nEditing = nRow;

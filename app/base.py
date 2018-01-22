@@ -8,12 +8,9 @@ import re
 import traceback
 
 from distutils.util import strtobool
-
-
 import dns.reversename
 
 from flask_login import AnonymousUserMixin, current_user
-
 from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
 from app.lib import utils
 from .models import History, Domain, DomainSetting, Setting
@@ -167,8 +164,9 @@ class Record(object):
             records.append(record)
 
         deleted_records, new_records = self.compare(domain, records)
+        #pprint(asdf)
 
-        records = []
+        self.records_delete = []
         for r in deleted_records:
             r_name = r['name'].rstrip('.') + '.' if NEW_SCHEMA else r['name']
             r_type = r['type']
@@ -182,9 +180,9 @@ class Record(object):
                       "type": r_type,
                       "changetype": "DELETE",
                       "records": [], }
-            records.append(record)
+            self.records_delete.append(record)
 
-        postdata_for_delete = {"rrsets": records}
+        postdata_for_delete = {"rrsets": self.records_delete}
 
         records = []
         for r in new_records:
@@ -266,7 +264,8 @@ class Record(object):
 
         postdata_for_new = {"rrsets": self.final_records_limit(final_records)}
 
-        try:
+        #try:
+        if True:
             # move this to after fetch_jason
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
@@ -284,21 +283,32 @@ class Record(object):
                 self.history_log(final_records, domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
 
-        except Exception, e:
-            LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(e), domain)
-            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+        #except Exception, e:
+        #    LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(e), domain)
+        #    return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def history_log(self, final_records, domain_name):
         """Write history Record to database"""
         for key in self.unique_key:
             testme = self.unique_key[key]
             if not testme['same']:
-                current = self.current_records[testme['current_records']]
-                final = final_records[testme['final_records']]
+                
+                if testme['change_type'] == 'ADD':
+                    current = None
+                    changetype = 'ADD'
+                    final = final_records[testme['final_records']]
+                elif testme['change_type'] == 'DELETE':
+                    current = None
+                    changetype = 'DELETE'
+                    final = final_records[testme['delete_records']]
+                else:
+                    current = self.current_records[testme['current_records']]
+                    changetype = 'REPLACE'
+                    final = final_records[testme['final_records']]
                 jdata = ''
-                history = History(msg='Apply record change to domain %s' % domain_name,
-                                  detail=str(jdata), created_by=current_user.username,
-                                  fromdata=current, todata=final, domain=domain_name)
+                history = History(msg='Apply record change to domain %s' % domain_name, domain=domain_name,
+                                  detail=str(jdata), created_by=current_user.username, fromdata=current, todata=final,
+                                  changetype=changetype)
                 db.session.add(history)
                 db.session.commit()
 
@@ -313,6 +323,10 @@ class Record(object):
             if item['type'] not in typeavoid:
                 key = (item['name'], item['type'])
                 self.unique_key[key] = {'final_records': position, 'same': False}
+        for position, item in enumerate(self.records_delete):
+            if item['type'] not in typeavoid:
+                key = (item['name'], item['type'])
+                self.unique_key[key] = {'delete_records': position, 'same': False}
         for position, item in enumerate(self.current_records):
             if item['type'] not in typeavoid:
                 name = item['name']
@@ -330,8 +344,18 @@ class Record(object):
         ttlcnt = 0
         reccnt = 0
         for key in self.unique_key:
+            # now for this record we can find if it is the same or edited
             testme = self.unique_key[key]
-            if 'current_records' in testme and 'final_records' in testme:
+            if not 'current_records' in testme and 'final_records' in testme and not 'delete_records' in testme:
+                # this is an add, does not matter if it is the same
+                testme['change_type'] = 'ADD'
+                pass
+            elif 'current_records' in testme and not 'final_records' in testme and 'delete_records' in testme:
+                # this is a delete, does not matter if it is the same
+                testme['change_type'] = 'DELETE'
+                pass
+            elif 'current_records' in testme and 'final_records' in testme and not 'delete_records' in testme:
+                testme['change_type'] = 'REPLACE'
                 current = self.current_records[testme['current_records']]
                 final = final_records[testme['final_records']]
                 same = True
@@ -355,14 +379,18 @@ class Record(object):
                 if same:
                     samecnt += 1
                 testme['same'] = same
-        #    else:
-        #        pprint(qwerqwer)
-        # look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(self.unique_key))
+            else:
+                pprint(qwerqwer)
+
+        look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(self.unique_key))
         net_final = []
         for key in self.unique_key:
             testme = self.unique_key[key]
             if testme['same'] is False:
-                net_final.append(final_records[testme['final_records']])
+                if testme['change_type'] == 'DELETE':
+                    net_final.append(self.records_delete[testme['delete_records']])
+                else:
+                    net_final.append(final_records[testme['final_records']])
         return net_final
 
     def auto_ptr(self, domain, new_records, deleted_records):

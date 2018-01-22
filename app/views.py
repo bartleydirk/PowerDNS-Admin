@@ -502,7 +502,8 @@ def record_apply(domain_name):
                     u'record_status': u'Active', u'record_data': u'duykhanh.me'}
     """
     # TO DO: filter removed records / name modified records.
-    try:
+    #try:
+    if True:
         pdata = request.form.get('postdata')
         jdata = json.loads(pdata)
         r = Record()
@@ -511,9 +512,9 @@ def record_apply(domain_name):
             return make_response(jsonify(result), 200)
         else:
             return make_response(jsonify(result), 400)
-    except Exception:
-        print traceback.format_exc()
-        return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
+    #except Exception:
+    #    print traceback.format_exc()
+    #    return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
 
 
 @app.route('/domain/<string:domain_name>/update', methods=['POST'], strict_slashes=False)
