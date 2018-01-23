@@ -270,7 +270,8 @@ class Record(object):
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
-            utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_delete)
+            # utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_delete)
+            #pprint(asdf)
             jdata2 = utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_new)
 
             if 'error' in jdata2.keys():

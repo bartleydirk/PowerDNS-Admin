@@ -32,7 +32,8 @@ def admin_history():
         name = request.values.get('name')
         histories = db.session.query(History.id, History.created_by, History.msg, History.created_on, History.name,
                                      History.changetype, Domain.name.label('domainname'))\
-                      .outerjoin(Domain, Domain.id == History.domain)
+                      .outerjoin(Domain, Domain.id == History.domain)\
+                      .order_by(db.desc(History.id))
         if name:
             histories = histories.filter(History.name == '%s.' % (name))
         if domain:
