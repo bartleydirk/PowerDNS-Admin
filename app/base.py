@@ -51,8 +51,7 @@ class Record(object):
             rrset_record = db.session.query(Rrset)\
                              .filter(Rrset.rrsetid == rrsetid)\
                              .first()
-            lookatme = rrset_record.rrsets
-            return {'records': lookatme}
+            return {'records': rrset_record.rrsets}
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         try:
@@ -126,6 +125,20 @@ class Record(object):
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",
                           self.name, self.type, self.data, domain, str(e))
+            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+
+    def api_serverconnect(self, domain, data):
+        """Connect to server on behalf of api"""
+        headers = {}
+        headers['X-API-Key'] = PDNS_API_KEY
+        print "\n\napi_serverconnect %s %s\n\n" % (domain, data)
+        try:
+            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
+            LOGGING.debug(jdata)
+            return {'status': 'ok', 'msg': 'Success api server connect', 'returndata': jdata}
+        except Exception as e:
+            LOGGING.error("Fail api server connect")
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def compare(self, domain_name, new_records):

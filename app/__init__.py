@@ -139,4 +139,4 @@ def enable_github_oauth(GITHUB_ENABLE):
 
 
 oauth, github = enable_github_oauth(app.config.get('GITHUB_OAUTH_ENABLE'))
-from app import base, models, views, history
+from app import base, models, views, history, api

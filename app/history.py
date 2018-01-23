@@ -30,8 +30,9 @@ def admin_history():
     if request.method == 'GET':
         domain = request.values.get('domain')
         name = request.values.get('name')
-        histories = db.session.query(History.id, History.created_by, History.msg, History.created_on, History.name,
-                                     History.changetype, Domain.name.label('domainname'))\
+        histories = db.session.query(History.id, History.created_by, History.msg,
+                                     db.func.CONVERT_TZ(History.created_on, '+00:00', '-07:00').label('created_on'),
+                                     History.name, History.changetype, Domain.name.label('domainname'))\
                       .outerjoin(Domain, Domain.id == History.domain)\
                       .order_by(db.desc(History.id))
         if name:

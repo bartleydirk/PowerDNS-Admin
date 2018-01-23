@@ -39,7 +39,6 @@ var table = $("#tbl_records").DataTable({
         {
             // History Link Column
             visible: true,
-            type: 'natural',
             targets: [ 8 ]
         }
     ],
