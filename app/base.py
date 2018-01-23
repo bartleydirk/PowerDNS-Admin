@@ -13,7 +13,7 @@ import dns.reversename
 from flask_login import AnonymousUserMixin, current_user
 from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
 from app.lib import utils
-from .models import History, Domain, DomainSetting, Setting
+from .models import History, Domain, DomainSetting, Setting, Rrset
 # pylint: disable=W0703,R1705
 
 
@@ -30,7 +30,7 @@ class Record(object):
     """
 
     # pylint: disable=C0103,R0913,W0622
-    def __init__(self, name=None, type=None, status=None, ttl=None, data=None):
+    def __init__(self, name=None, type=None, status=None, ttl=None, data=None, rrsetid=None):
         self.name = name
         self.type = type
         self.status = status
@@ -39,12 +39,20 @@ class Record(object):
         self.current_records = []
         self.priority = None
         self.unique_key = None
+        self.rrsetid = rrsetid
+        self.records_delete = []
 
-    @classmethod
-    def get_record_data(cls, domain):
+    def get_record_data(self, domain):
         """
         Query domain's DNS records via API
         """
+        if self.rrsetid:
+            rrsetid = int(self.rrsetid)
+            rrset_record = db.session.query(Rrset)\
+                             .filter(Rrset.rrsetid == rrsetid)\
+                             .first()
+            lookatme = rrset_record.rrsets
+            return {'records': lookatme}
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         try:
@@ -67,13 +75,17 @@ class Record(object):
                 rrset['name'] = r_name
                 rrset['content'] = rrset['records'][0]['content']
                 rrset['disabled'] = rrset['records'][0]['disabled']
+            rrset_ = Rrset(rrsets=rrsets)
+            db.session.add(rrset_)
+            db.session.commit()
+            self.rrsetid = rrset_.rrsetid
             return {'records': rrsets}
 
         return jdata
 
     def add(self, domain):
         """
-        Add a record to domain
+        Add a record to domains
         """
         # validate record first
         rec = self.get_record_data(domain)
@@ -164,7 +176,6 @@ class Record(object):
             records.append(record)
 
         deleted_records, new_records = self.compare(domain, records)
-        #pprint(asdf)
 
         self.records_delete = []
         for r in deleted_records:
@@ -182,7 +193,7 @@ class Record(object):
                       "records": [], }
             self.records_delete.append(record)
 
-        postdata_for_delete = {"rrsets": self.records_delete}
+        # postdata_for_delete = {"rrsets": self.records_delete}
 
         records = []
         for r in new_records:
@@ -264,14 +275,13 @@ class Record(object):
 
         postdata_for_new = {"rrsets": self.final_records_limit(final_records)}
 
-        #try:
-        if True:
+        # if True:
+        try:
             # move this to after fetch_jason
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
             # utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_delete)
-            #pprint(asdf)
             jdata2 = utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_new)
 
             if 'error' in jdata2.keys():
@@ -284,16 +294,15 @@ class Record(object):
                 self.history_log(final_records, domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
 
-        #except Exception, e:
-        #    LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(e), domain)
-        #    return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+        except Exception, e:
+            LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(e), domain)
+            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def history_log(self, final_records, domain_name):
         """Write history Record to database"""
         for key in self.unique_key:
             testme = self.unique_key[key]
             if not testme['same']:
-                
                 if testme['change_type'] == 'ADD':
                     current = None
                     changetype = 'ADD'
@@ -315,7 +324,7 @@ class Record(object):
 
     def final_records_limit(self, final_records):
         """limit the number of replace changes, for LOGGING"""
-        # pylint: disable=R0912
+        # pylint: disable=R0912,R0915
         self.unique_key = {}
         notcurrent = []
         re_endindot = re.compile(r'\.$')
@@ -347,15 +356,13 @@ class Record(object):
         for key in self.unique_key:
             # now for this record we can find if it is the same or edited
             testme = self.unique_key[key]
-            if not 'current_records' in testme and 'final_records' in testme and not 'delete_records' in testme:
+            if 'current_records' not in testme and 'final_records' in testme and 'delete_records' not in testme:
                 # this is an add, does not matter if it is the same
                 testme['change_type'] = 'ADD'
-                pass
-            elif 'current_records' in testme and not 'final_records' in testme and 'delete_records' in testme:
+            elif 'current_records' in testme and 'final_records' not in testme and 'delete_records' in testme:
                 # this is a delete, does not matter if it is the same
                 testme['change_type'] = 'DELETE'
-                pass
-            elif 'current_records' in testme and 'final_records' in testme and not 'delete_records' in testme:
+            elif 'current_records' in testme and 'final_records' in testme and 'delete_records' not in testme:
                 testme['change_type'] = 'REPLACE'
                 current = self.current_records[testme['current_records']]
                 final = final_records[testme['final_records']]
@@ -380,10 +387,7 @@ class Record(object):
                 if same:
                     samecnt += 1
                 testme['same'] = same
-            else:
-                pprint(qwerqwer)
 
-        look = '%s %s %s %s %s' % (samecnt, lencnt, ttlcnt, reccnt, len(self.unique_key))
         net_final = []
         for key in self.unique_key:
             testme = self.unique_key[key]

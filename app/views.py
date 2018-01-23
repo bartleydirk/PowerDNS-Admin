@@ -352,11 +352,11 @@ def dashboard():
 @login_required
 def domain(domain_name):
     """Domain Route, Listing the records"""
-    r = Record()
+    rec = Record()
     domain = Domain.query.filter(Domain.name == domain_name).first()
     if domain:
         # query domain info from PowerDNS API
-        zone_info = r.get_record_data(domain.name)
+        zone_info = rec.get_record_data(domain.name)
         if zone_info:
             jrecords = zone_info['records']
         else:
@@ -398,9 +398,9 @@ def domain(domain_name):
             name = lastdot.sub('', item.name)
             hdict[name] = item.count
         return render_template('domain.html', domain=domain, records=records, editable_records=editable_records,
-                               hdict=hdict)
+                               hdict=hdict, rrsetid=rec.rrsetid)
     else:
-        return redirect(url_for('error', code=404))
+        return redirect(url_for('error no domain', code=404))
 
 
 @app.route('/admin/domain/add', methods=['GET', 'POST'])
@@ -502,19 +502,20 @@ def record_apply(domain_name):
                     u'record_status': u'Active', u'record_data': u'duykhanh.me'}
     """
     # TO DO: filter removed records / name modified records.
-    #try:
-    if True:
+    # if True:
+    try:
         pdata = request.form.get('postdata')
+        rrsetid = request.form.get('rrsetid', None)
         jdata = json.loads(pdata)
-        r = Record()
-        result = r.apply(domain_name, jdata)
+        rec = Record(rrsetid=rrsetid)
+        result = rec.apply(domain_name, jdata)
         if result['status'] == 'ok':
             return make_response(jsonify(result), 200)
         else:
             return make_response(jsonify(result), 400)
-    #except Exception:
-    #    print traceback.format_exc()
-    #    return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
+    except Exception:
+        print traceback.format_exc()
+        return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
 
 
 @app.route('/domain/<string:domain_name>/update', methods=['POST'], strict_slashes=False)

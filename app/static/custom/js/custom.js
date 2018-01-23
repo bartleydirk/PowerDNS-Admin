@@ -1,10 +1,10 @@
-function applyChanges(data, url, showResult, refreshPage) {
+function applyChanges(data, url, showResult, refreshPage, rrsetid) {
     var success = false;
-    console.log('applyChanges url is "' + url + '"');
+    console.log('applyChanges url is "' + url + '" rrsetid "' + rrsetid + '"');
     //strng = object_to_debugstring(data);
     //console.log('applyChanges data is :\n"' + strng + '"');
     var postdata = JSON.stringify(data);
-    var ntdata = {'postdata': postdata}
+    var ntdata = {'postdata': postdata, 'rrsetid': rrsetid}
     $.ajax({
         type : "POST",
         url : url,

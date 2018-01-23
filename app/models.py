@@ -868,6 +868,19 @@ class History(db.Model):
             return False
 
 
+class Rrset(db.Model):
+    """SQLAlchemy model for the history database table"""
+    rrsetid = db.Column(db.Integer, primary_key=True)
+    rrsets = db.Column(db.JSON)
+    tstmp = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # pylint: disable=R0913,W0622,R0903
+    def __init__(self, rrsets=None):
+        self.rrsets = rrsets
+        self.tstmp = datetime.utcnow()
+        self.rrsetid = None
+
+
 class Setting(db.Model):
     """SQLAlchemy Model for the setting table in the database"""
     # pylint: disable=C0103

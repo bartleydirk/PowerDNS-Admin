@@ -11,8 +11,7 @@
         Manage domain <small>{{ domain.name }}</small>
     </h1>
     <ol class="breadcrumb">
-        <li><a href="{{ url_for('dashboard') }}"><i
-                class="fa fa-dashboard"></i> Home</a></li>
+        <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
         <li>Domain</li>
         <li class="active">{{ domain.name }}</li>
     </ol>
@@ -119,7 +118,7 @@
 
 {% block extrascripts %}
 <script>
-    {{ djs.domainjs(editable_records, domain, default_record_table_size_setting, record_helper_setting) }}
+    {{ djs.domainjs(editable_records, domain, default_record_table_size_setting, record_helper_setting, rrsetid) }}
 </script>
 {% endblock %}
 

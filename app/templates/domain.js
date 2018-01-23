@@ -1,12 +1,12 @@
 
-{% macro domainjs(editable_records, domain, default_record_table_size_setting, record_helper_setting) %}
+{% macro domainjs(editable_records, domain, default_record_table_size_setting, record_helper_setting, rrsetid) %}
 // superglobals
 window.records_allow_edit = {{ editable_records|tojson }};
 window.nEditing = null;
 window.nNew = false;
 
 // set up user data table
-$("#tbl_records").DataTable({
+var table = $("#tbl_records").DataTable({
     "paging" : true,
     "lengthChange" : true,
     "searching" : true,
@@ -45,13 +45,13 @@ $("#tbl_records").DataTable({
     ],
     "orderFixed": [[7, 'asc']]
 });
+//$( document ).ready( onload() );
 
-$( document ).ready( onload() );
-function onload() {
     console.log('onload');
 
     // handle apply changes button
-    $('#button_apply_changes').click(function(e) {
+    //$('#button_apply_changes').click(function(e) {
+    $(document.body).on("click", "#button_apply_changes", function(e) {
         console.log('#button_apply_changes');
         var modal = $("#modal_apply_changes");
         var table = $("#tbl_records").DataTable();
@@ -61,15 +61,16 @@ function onload() {
         modal.find('#button_apply_confirm').click(function() {
             var data = getTableData(table);
             console.log('button_apply_changes data is "' + data.length + '"')
-            applyChanges(data, "{{ url_for('record_apply', domain_name=domain.name) }}", true);
+            applyChanges(data, "{{ url_for('record_apply', domain_name=domain.name) }}", true, false, {{ rrsetid }});
             modal.modal('hide');
         })
         modal.modal('show');
-        onbuttonchange();
+        //onbuttonchange();
     });
 
     // handle add record button
-    $('#button_add_record').click(function(e) {
+    //$('#button_add_record').click(function(e) {
+    $(document.body).on("click", "#button_add_record", function(e) {
         console.log('#button_add_record');
         if (nNew || nEditing) {
             var modal = $("#modal_error");
@@ -87,22 +88,23 @@ function onload() {
         document.getElementById("edit-row-focus").focus();
         nEditing = nRow;
         nNew = true;
-        onbuttonchange();
+        //onbuttonchange();
     });
 
-    //handle update_from_master button
-    $('#button_update_from_master').click(function(e) {
-            console.log('.button_update_from_master');
-            var domain = $(this).prop('id');
-            applyChanges({'domain': domain}, $SCRIPT_ROOT + '/domain/' + domain + '/update');
+    //handle update_from_master button  I do not think this button exists any more
+    //$('#button_update_from_master').click(function(e) {
+    $(document.body).on("click", "#button_update_from_master", function(e) {
+        console.log('.button_update_from_master');
+        var domain = $(this).prop('id');
+        applyChanges({'domain': domain}, $SCRIPT_ROOT + '/domain/' + domain + '/update', true, false, {{ rrsetid }});
     });
-    onbuttonchange();
-}
+    //onbuttonchange();
 
-function onbuttonchange() {
+//function onbuttonchange() {
     console.log('onbuttonchange');
     // handle delete button
-    $('.button_delete').click(function(e) {
+    //$('.button_delete').unbind().click(function(e) {
+    $(document.body).on("click", ".button_delete", function(e) {
         console.log('.button_delete');
         e.stopPropagation();
         var modal = $("#modal_delete");
@@ -124,7 +126,8 @@ function onbuttonchange() {
     });
 
     // handle edit button
-    $('.button_edit, .row_record').click(function(e) {
+    //$('.button_edit,.row_record').unbind().click(function(e) {
+    $(document.body).on("click", ".button_edit,.row_record", function(e) {
         console.log('.button_edit, .row_record');
          e.stopPropagation();
          if ($(this).is('tr')) {
@@ -152,11 +155,12 @@ function onbuttonchange() {
              editRow(table, nRow);
              nEditing = nRow;
          }
-         onbuttonchange();
+         //onbuttonchange();
     });
 
     // handle cancel button
-    $('.button_cancel').click(function(e) {
+    //$('.button_cancel').unbind().click(function(e) {
+    $(document.body).on("click", ".button_cancel", function(e) {
         console.log('.button_cancel');
         e.stopPropagation();
         var oTable = $("#tbl_records").DataTable();
@@ -168,20 +172,21 @@ function onbuttonchange() {
             restoreRow(oTable, nEditing);
             nEditing = null;
         }
-        onbuttonchange();
+        //onbuttonchange();
     });
 
     //handle save button
-    $('.button_save').click(function(e) {
+    //$('.button_save').unbind().click(function(e) {
+    $(document.body).on("click", ".button_save", function(e) {
         console.log('.button_save');
         e.stopPropagation();
         var table = $("#tbl_records").DataTable();
         saveRow(table, nEditing);
         nEditing = null;
         nNew = false;
-        onbuttonchange();
+        //onbuttonchange();
     });
-}
+//}
 
 
 {% if record_helper_setting %}
