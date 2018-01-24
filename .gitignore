@@ -29,3 +29,4 @@ upload/avatar/*
 tmp/*
 .ropeproject
 *.geany
+*.swp
