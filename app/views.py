@@ -125,15 +125,16 @@ def login_via_authorization_header(request_):
             error_ = err.message['desc'] if 'desc' in err.message else err
             return error_
         user = User(username=username, password=password, plain_text_password=password)
-        try:
+        #try:
+        if True:
             auth = user.is_validate(method='LOCAL')
             if not auth:
                 return None
             else:
                 login_user(user, remember=False)
                 return user
-        except Exception:
-            return None
+        #except Exception:
+        #    return None
     return None
 
 # END USER AUTHENTICATION HANDLER
@@ -262,16 +263,17 @@ def login():
         user = User(username=username, password=password, plain_text_password=password)
 
         # pylint: disable=E1126
-        try:
+        #try:
+        if True:
             auth = user.is_validate(method=auth_method)
             if not auth:
                 return render_template('login.html', error='Invalid credentials', ldap_enabled=LDAP_ENABLED,
                                        login_title=LOGIN_TITLE, basic_enabled=BASIC_ENABLED,
                                        signup_enabled=SIGNUP_ENABLED)
-        except Exception, e:
-            err_ = e.message['desc'] if 'desc' in e.message else e
-            return render_template('login.html', error=err_, ldap_enabled=LDAP_ENABLED, login_title=LOGIN_TITLE,
-                                   basic_enabled=BASIC_ENABLED, signup_enabled=SIGNUP_ENABLED)
+        #except Exception, e:
+        #    err_ = e.message['desc'] if 'desc' in e.message else e
+        #    return render_template('login.html', error=err_, ldap_enabled=LDAP_ENABLED, login_title=LOGIN_TITLE,
+        #                           basic_enabled=BASIC_ENABLED, signup_enabled=SIGNUP_ENABLED)
 
         # check if user enabled OPT authentication
         if user.otp_secret:
