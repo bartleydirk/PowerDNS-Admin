@@ -62,7 +62,7 @@ def api():
     if apikey == 'sendserverkey':
         # there is no api key, the client needs one, we have the client public
         # encrypt a token, after getting the password
-        token = server_keypair.createclienttoken(newtoken=True, username=username)
+        token = client_keypair.checktoken()
         server_pubkey = base64.b64encode(server_keypair.get_pub_key())
         # setfromserver is a misnomer not save as serverkeys !!!!!
         show(client_keypair)
