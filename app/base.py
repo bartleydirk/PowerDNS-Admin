@@ -138,7 +138,7 @@ class Record(object):
             LOGGING.debug(jdata)
             return {'status': 'ok', 'msg': 'Success api server connect', 'returndata': jdata}
         except Exception as e:
-            LOGGING.error("Fail api server connect")
+            LOGGING.error("Fail base.py api_serverconnect api server connect")
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def compare(self, domain_name, new_records):

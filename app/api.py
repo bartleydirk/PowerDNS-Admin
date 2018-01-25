@@ -24,6 +24,7 @@ def getheadervalue(headers, value):
     for tup in headers:
         if tup[0].upper() == value.upper():
             retval = tup[1]
+    show('getheadervalue -> %s is %s' % (value, retval))
     return retval
 
 
@@ -32,8 +33,42 @@ def show(val):
     print(val)
 
 
+def getconfigfile():
+    exepath = os.path.dirname(os.path.realpath(__file__))
+    oneup = os.path.abspath(os.path.join(exepath, ".."))
+    cnfgfile = '%s/%s' % (oneup, 'serverkeys.cfg')
+    show("server keys cfg file is %s" % (cnfgfile))
+
+@app.route('/exchangekeys', methods=['GET', 'POST', 'PATCH'])
+def exchangekeys():
+    """Exchange keys."""
+    # get the headers we can from the client
+    username = getheadervalue(request.headers, 'X-API-User')
+    client_pubkey = base64.b64decode(getheadervalue(request.headers, 'X-API-Pubkey'))
+    show('X-API-Pubkey is %s' % (client_pubkey))
+
+    cnfgfile = getconfigfile()
+    server_keypair = Keypair(cnfgfile=cnfgfile)
+    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
+
+    # generate and save a token in the cfg file
+    token = client_keypair.gentoken()
+    print 'token is %s' % token
+    encryptedtoken = server_keypair.encrypt(token)
+    print 'encryptedtoken is %s' % encryptedtoken
+    encryptedtoken = base64.standard_b64encode(encryptedtoken)
+    print 'encryptedtoken is %s' % encryptedtoken
+    
+    show(client_keypair)
+
+    server_pubkey = base64.b64encode(server_keypair.get_pub_key())
+
+    # the public key was passed in the constructor, and this method saves client pubkey as well
+    client_keypair.saveclientonserver(token=token, username=username)
+    return jsonify(status='serverkey', server_pubkey=server_pubkey, token=encryptedtoken)
+
+
 @app.route('/api', methods=['GET', 'POST', 'PATCH'])
-# @login_required
 def api():
     """Let us test the api from a brower so I can debug the damn thing."""
     # first authenticate
@@ -45,31 +80,16 @@ def api():
     username = getheadervalue(request.headers, 'X-API-User')
     show('X-API-User is %s' % (username))
     b64 = getheadervalue(request.headers, 'X-API-Pubkey')
-    user_pubkey = base64.b64decode(b64)
-    show('X-API-Pubkey is %s' % (user_pubkey))
+    client_pubkey = base64.b64decode(b64)
+    show('X-API-Pubkey is %s' % (client_pubkey))
 
-    exepath = os.path.dirname(os.path.realpath(__file__))
-    oneup = os.path.abspath(os.path.join(exepath, ".."))
-    cnfgfile = '%s/%s' % (oneup, 'serverkeys.cfg')
-    show("server keys cfg file is %s" % (cnfgfile))
+    cnfgfile = getconfigfile()
 
     server_keypair = Keypair(cnfgfile=cnfgfile)
     # data_ = server_keypair.encrypt('Hello There')
     # show('The decrypted string is %s' % (server_keypair.decrypt(data_)))
 
-    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=user_pubkey)
-
-    if apikey == 'sendserverkey':
-        # there is no api key, the client needs one, we have the client public
-        # encrypt a token, after getting the password
-        token = client_keypair.checktoken()
-        server_pubkey = base64.b64encode(server_keypair.get_pub_key())
-        # setfromserver is a misnomer not save as serverkeys !!!!!
-        show(client_keypair)
-        client_keypair.saveclientonserver(token=token, username=username)
-        return jsonify(status='serverkey', server_pubkey=server_pubkey, token=token)
-
-    # show('test random is %s' % (base64.b64encode(test))
+    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
 
     rec = Record()
     if DBGREQUEST:
