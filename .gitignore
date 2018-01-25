@@ -30,3 +30,5 @@ tmp/*
 .ropeproject
 *.geany
 *.swp
+admin_api
+serverkeys.cfg
