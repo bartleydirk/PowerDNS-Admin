@@ -24,7 +24,8 @@ def getheadervalue(headers, value):
     for tup in headers:
         if tup[0].upper() == value.upper():
             retval = tup[1]
-    show('getheadervalue -> %s is %s' % (value, retval))
+    if DBGHDR:
+        show('getheadervalue -> %s is %s' % (value, retval))
     return retval
 
 
@@ -42,10 +43,10 @@ def getconfigfile():
 @app.route('/exchangekeys', methods=['GET', 'POST', 'PATCH'])
 def exchangekeys():
     """Exchange keys."""
+    show("Begin exchange route #########################################\n\n")
     # get the headers we can from the client
     username = getheadervalue(request.headers, 'X-API-User')
     client_pubkey = base64.b64decode(getheadervalue(request.headers, 'X-API-Pubkey'))
-    show('X-API-Pubkey is %s' % (client_pubkey))
 
     cnfgfile = getconfigfile()
     server_keypair = Keypair(cnfgfile=cnfgfile)
@@ -54,10 +55,10 @@ def exchangekeys():
     # generate and save a token in the cfg file
     token = client_keypair.gentoken()
     print 'token is %s' % token
-    encryptedtoken = server_keypair.encrypt(token)
-    print 'encryptedtoken is %s' % encryptedtoken
-    encryptedtoken = base64.standard_b64encode(encryptedtoken)
-    print 'encryptedtoken is %s' % encryptedtoken
+    #encryptedtoken = server_keypair.encrypt(token)
+    #print 'encryptedtoken is %s' % encryptedtoken
+    #encryptedtoken = base64.standard_b64encode(encryptedtoken)
+    #print 'encryptedtoken is %s' % encryptedtoken
     
     show(client_keypair)
 
@@ -65,14 +66,14 @@ def exchangekeys():
 
     # the public key was passed in the constructor, and this method saves client pubkey as well
     client_keypair.saveclientonserver(token=token, username=username)
-    return jsonify(status='serverkey', server_pubkey=server_pubkey, token=encryptedtoken)
+    return jsonify(status='serverkey', server_pubkey=server_pubkey, token=token)
 
 
 @app.route('/api', methods=['GET', 'POST', 'PATCH'])
 def api():
     """Let us test the api from a brower so I can debug the damn thing."""
     # first authenticate
-    show("Begin run #########################################\n\n")
+    show("Begin api route #########################################\n\n")
 
     # get the headers we can from the client
     apikey = getheadervalue(request.headers, 'X-API-Key')
