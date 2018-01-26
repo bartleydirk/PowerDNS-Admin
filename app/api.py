@@ -51,17 +51,23 @@ def exchangekeys():
     # get the headers we can from the client
     username = getheadervalue(request.headers, 'X-API-User')
     client_pubkey = base64.b64decode(getheadervalue(request.headers, 'X-API-Pubkey'))
+    pprint(request.headers)
+    client_uuid = base64.b64decode(getheadervalue(request.headers, 'X-API-clientuuid'))
 
     cnfgfile = getconfigfile()
     server_keypair = Keypair(cnfgfile=cnfgfile)
-    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
+    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey, uuid=client_uuid)
 
+    print "exchangekeys showing client_keypair pubkey %s username %s" % (client_pubkey, username)
     show(client_keypair)
-    server_pubkey = base64.b64encode(server_keypair.get_pub_key())
+    pubkey, uuid_ = server_keypair.get_pub_key()
+    show('exchangekeys pubkey "%s", uuid %s' % (pubkey, uuid_))
+    server_pubkey = base64.b64encode(pubkey)
+    server_uuid = base64.b64encode(uuid_)
 
     # the public key was passed in the constructor, and this method saves client pubkey as well
     client_keypair.saveclientonserver()
-    return jsonify(status='serverkey', server_pubkey=server_pubkey)
+    return jsonify(status='serverkey', server_pubkey=server_pubkey, server_uuid=server_uuid)
 
 
 @app.route('/token', methods=['GET', 'POST', 'PATCH'])
