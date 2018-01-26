@@ -163,19 +163,6 @@ def api():
     if not token_verify():
         retval = jsonify(retval='No Token')
 
-    # get the headers we can from the client
-    # apikey = getheadervalue(request.headers, 'X-API-Key')
-    # show('X-API-Key is %s' % (apikey))
-    # username = getheadervalue(request.headers, 'X-API-User')
-    # show('X-API-User is %s' % (username))
-    # b64 = getheadervalue(request.headers, 'X-API-Pubkey')
-    # client_pubkey = base64.b64decode(b64)
-    # show('X-API-Pubkey is %s' % (client_pubkey))
-
-    # cnfgfile = getconfigfile()
-    # server_keypair = Keypair(cnfgfile=cnfgfile)
-    # client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
-
     rec = Record()
     if DBGREQUEST:
         show("\n\n\n\n\nForm")
