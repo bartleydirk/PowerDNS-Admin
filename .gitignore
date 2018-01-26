@@ -31,4 +31,4 @@ tmp/*
 *.geany
 *.swp
 admin_api
-keys.cfg
+*.cfg
