@@ -7,10 +7,11 @@ import base64
 from pprint import pprint
 from flask import request, jsonify
 from admin_api.crypt import Keypair
+from models import User
 
-from app import app
+from app import app, db
 # from app.models import User, Domain, History, Setting, DomainSetting
-# pylint: disable=E0401
+# pylint: disable=E0401,E0001
 from .base import Record
 
 DBGREQUEST = False
@@ -35,10 +36,13 @@ def show(val):
 
 
 def getconfigfile():
+    """Get the config file consistently."""
     exepath = os.path.dirname(os.path.realpath(__file__))
     oneup = os.path.abspath(os.path.join(exepath, ".."))
     cnfgfile = '%s/%s' % (oneup, 'serverkeys.cfg')
     show("server keys cfg file is %s" % (cnfgfile))
+    return cnfgfile
+
 
 @app.route('/exchangekeys', methods=['GET', 'POST', 'PATCH'])
 def exchangekeys():
@@ -52,21 +56,46 @@ def exchangekeys():
     server_keypair = Keypair(cnfgfile=cnfgfile)
     client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
 
-    # generate and save a token in the cfg file
-    token = client_keypair.gentoken()
-    print 'token is %s' % token
-    #encryptedtoken = server_keypair.encrypt(token)
-    #print 'encryptedtoken is %s' % encryptedtoken
-    #encryptedtoken = base64.standard_b64encode(encryptedtoken)
-    #print 'encryptedtoken is %s' % encryptedtoken
-    
     show(client_keypair)
-
     server_pubkey = base64.b64encode(server_keypair.get_pub_key())
 
     # the public key was passed in the constructor, and this method saves client pubkey as well
-    client_keypair.saveclientonserver(token=token, username=username)
-    return jsonify(status='serverkey', server_pubkey=server_pubkey, token=token)
+    client_keypair.saveclientonserver()
+    return jsonify(status='serverkey', server_pubkey=server_pubkey)
+
+
+@app.route('/token', methods=['GET', 'POST', 'PATCH'])
+def token_request():
+    """Exchange keys."""
+    show("Begin token route #########################################\n\n")
+    # get the headers we can from the client
+    username = getheadervalue(request.headers, 'X-API-User')
+    encryptedpassword = getheadervalue(request.headers, 'X-API-Password')
+    show("token -> encryptedpassword = %s" % (encryptedpassword))
+
+    cnfgfile = getconfigfile()
+    server_keypair = Keypair(cnfgfile=cnfgfile)
+    client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
+    show(server_keypair)
+    password = server_keypair.decrypt(encryptedpassword)
+    show("token -> password = %s" % (password))
+
+    user = db.session.query(User)\
+             .filter(User.username == username)\
+             .first()
+    user.plain_text_password = password
+    encryptedtoken = ''
+    if user.password and user.check_password(user.password):
+        status = 'Password Success'
+        # generate and save a token in the cfg file
+        token = client_keypair.gentoken()
+        encryptedtoken = client_keypair.encrypt(token)
+
+        client_keypair.saveclientonserver(token=token)
+    else:
+        status = 'Password Fail'
+
+    return jsonify(status=status, encryptedtoken=encryptedtoken)
 
 
 @app.route('/api', methods=['GET', 'POST', 'PATCH'])
@@ -84,13 +113,9 @@ def api():
     client_pubkey = base64.b64decode(b64)
     show('X-API-Pubkey is %s' % (client_pubkey))
 
-    cnfgfile = getconfigfile()
-
-    server_keypair = Keypair(cnfgfile=cnfgfile)
-    # data_ = server_keypair.encrypt('Hello There')
-    # show('The decrypted string is %s' % (server_keypair.decrypt(data_)))
-
-    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
+    # cnfgfile = getconfigfile()
+    # server_keypair = Keypair(cnfgfile=cnfgfile)
+    # client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey)
 
     rec = Record()
     if DBGREQUEST:
