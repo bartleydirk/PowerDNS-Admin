@@ -5,8 +5,9 @@ import os
 # import sys
 import base64
 from pprint import pprint
+# pylint: disable=E0611
 from flask import request, jsonify
-from admin_api.crypt import Keypair
+from admin_api.crypt import Keypair  # , limitlines
 from models import User
 
 from app import app, db
@@ -44,30 +45,47 @@ def getconfigfile():
     return cnfgfile
 
 
-@app.route('/exchangekeys', methods=['GET', 'POST', 'PATCH'])
-def exchangekeys():
-    """Exchange keys."""
-    show("Begin exchange route #########################################\n\n")
+@app.route('/checkkeys', methods=['GET', 'POST', 'PATCH'])
+def checkkeys():
+    """Check keys."""
+    show("Begin checkkeys route #########################################\n\n")
     # get the headers we can from the client
     username = getheadervalue(request.headers, 'X-API-User')
     client_pubkey = base64.b64decode(getheadervalue(request.headers, 'X-API-Pubkey'))
-    pprint(request.headers)
     client_uuid = base64.b64decode(getheadervalue(request.headers, 'X-API-clientuuid'))
+    # show("checkkeys showing client_keypair client_uuid\n%s pubkey %s" % (client_uuid, limitlines(client_pubkey)))
+    show("checkkeys showing client_keypair client_uuid %s" % (client_uuid))
+
+    # server_pubkey_onclient = base64.b64decode(getheadervalue(request.headers, 'X-API-Serverpubkey'))
+    server_uuid_onclient = base64.b64decode(getheadervalue(request.headers, 'X-API-Serveruuid'))
+    show("checkkeys showing server_uuid_onclient %s" % (server_uuid_onclient))
+    # show("checkkeys showing server_pubkey_onclient server_uuid_onclient %s\npubkey %s" %
+    #     (server_uuid_onclient, limitlines(server_pubkey_onclient)))
 
     cnfgfile = getconfigfile()
+    # this will generate new server keys if does not exist
     server_keypair = Keypair(cnfgfile=cnfgfile)
-    client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey, uuid=client_uuid)
+    show('checkkeys server_keypair.uuid "%s"' % (server_keypair.uuid))
 
-    print "exchangekeys showing client_keypair pubkey %s username %s" % (client_pubkey, username)
+    # this will not generate new keys
+    client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
+    show("checkkeys showing client_keypair.uuid %s" % (client_keypair.uuid))
     show(client_keypair)
-    pubkey, uuid_ = server_keypair.get_pub_key()
-    show('exchangekeys pubkey "%s", uuid %s' % (pubkey, uuid_))
-    server_pubkey = base64.b64encode(pubkey)
-    server_uuid = base64.b64encode(uuid_)
 
-    # the public key was passed in the constructor, and this method saves client pubkey as well
-    client_keypair.saveclientonserver()
-    return jsonify(status='serverkey', server_pubkey=server_pubkey, server_uuid=server_uuid)
+    if server_uuid_onclient == server_keypair.uuid and client_uuid == client_keypair.uuid:
+        retval = jsonify(status='ok')
+    else:
+        client_keypair = Keypair(cnfgfile=cnfgfile, username=username, pubkeystring=client_pubkey, uuid_=client_uuid)
+        # show(client_keypair)
+        pubkey, uuid_ = server_keypair.get_pub_key()
+        show('checkkeys pubkey "%s", uuid %s' % (pubkey, uuid_))
+        server_pubkey = base64.b64encode(pubkey)
+        server_uuid = base64.b64encode(uuid_)
+
+        # the public key was passed in the constructor, and this method saves client pubkey as well
+        client_keypair.saveclientonserver()
+        retval = jsonify(status='serverkey', server_pubkey=server_pubkey, server_uuid=server_uuid)
+    return retval
 
 
 @app.route('/token', methods=['GET', 'POST', 'PATCH'])
@@ -86,8 +104,8 @@ def token_request():
     password = server_keypair.decrypt(encryptedpassword)
     show("token -> password = %s" % (password))
 
-    user = db.session.query(User)\
-             .filter(User.username == username)\
+    user = db.session.query(User) \
+             .filter(User.username == username) \
              .first()
     user.plain_text_password = password
     encryptedtoken = ''
