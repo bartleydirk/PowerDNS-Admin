@@ -161,7 +161,6 @@ class User(db.Model):
             user_info = User.query.filter(User.username == self.username).first()
 
             if user_info:
-                pprint(asdf)
                 if user_info.password and self.check_password(user_info.password):
                     LOGGING.info('User "%s" logged in successfully', self.username)
                     return True

@@ -45,6 +45,28 @@ def getconfigfile():
     return cnfgfile
 
 
+def token_verify():
+    """Verify Token."""
+    # get the headers we can from the client
+    username = getheadervalue(request.headers, 'X-API-User')
+    encryptedtoken = getheadervalue(request.headers, 'X-API-Key')
+    show("token_check -> encryptedtoken = %s" % (encryptedtoken))
+
+    cnfgfile = getconfigfile()
+    server_keypair = Keypair(cnfgfile=cnfgfile)
+    client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
+    show(server_keypair)
+    token_fromclient = server_keypair.decrypt(encryptedtoken)
+    show("token_check -> token_fromclient     = '%s'" % (token_fromclient))
+    show("token_check -> server_keypair.token = '%s'" % (client_keypair.token))
+
+    retval = False
+    if token_fromclient == client_keypair.token:
+        retval = True
+    show("token_verify -> returning = %s" % (retval))
+    return retval
+
+
 @app.route('/checkkeys', methods=['GET', 'POST', 'PATCH'])
 def checkkeys():
     """Check keys."""
@@ -88,7 +110,18 @@ def checkkeys():
     return retval
 
 
-@app.route('/token', methods=['GET', 'POST', 'PATCH'])
+@app.route('/token_check', methods=['GET', 'POST', 'PATCH'])
+def token_check():
+    """Exchange keys."""
+    show("Begin token_check route #########################################\n\n")
+    if token_verify():
+        status = 'Token Success'
+    else:
+        status = 'Token Fail'
+    return jsonify(status=status)
+
+
+@app.route('/token_request', methods=['GET', 'POST', 'PATCH'])
 def token_request():
     """Exchange keys."""
     show("Begin token route #########################################\n\n")
@@ -112,10 +145,10 @@ def token_request():
     if user.password and user.check_password(user.password):
         status = 'Password Success'
         # generate and save a token in the cfg file
-        token = client_keypair.gentoken()
-        encryptedtoken = client_keypair.encrypt(token)
+        token_ = client_keypair.gentoken()
+        encryptedtoken = client_keypair.encrypt(token_)
 
-        client_keypair.saveclientonserver(token=token)
+        client_keypair.saveclientonserver(token_=token_)
     else:
         status = 'Password Fail'
 
@@ -127,15 +160,17 @@ def api():
     """Let us test the api from a brower so I can debug the damn thing."""
     # first authenticate
     show("Begin api route #########################################\n\n")
+    if not token_verify():
+        retval = jsonify(retval='No Token')
 
     # get the headers we can from the client
-    apikey = getheadervalue(request.headers, 'X-API-Key')
-    show('X-API-Key is %s' % (apikey))
-    username = getheadervalue(request.headers, 'X-API-User')
-    show('X-API-User is %s' % (username))
-    b64 = getheadervalue(request.headers, 'X-API-Pubkey')
-    client_pubkey = base64.b64decode(b64)
-    show('X-API-Pubkey is %s' % (client_pubkey))
+    # apikey = getheadervalue(request.headers, 'X-API-Key')
+    # show('X-API-Key is %s' % (apikey))
+    # username = getheadervalue(request.headers, 'X-API-User')
+    # show('X-API-User is %s' % (username))
+    # b64 = getheadervalue(request.headers, 'X-API-Pubkey')
+    # client_pubkey = base64.b64decode(b64)
+    # show('X-API-Pubkey is %s' % (client_pubkey))
 
     # cnfgfile = getconfigfile()
     # server_keypair = Keypair(cnfgfile=cnfgfile)
