@@ -4,10 +4,12 @@ import json
 import os
 # import sys
 import base64
-from pprint import pprint
+from pprint import pformat
 # pylint: disable=E0611
 from flask import request, jsonify
 from admin_api.crypt import Keypair  # , limitlines
+# pylint: disable=E0401
+from admin_api import build_rrset
 from models import User
 
 from app import app, db
@@ -18,6 +20,30 @@ from .base import Record
 DBGREQUEST = False
 DBGDATA = False
 DBGHDR = False
+SHOWLOG = True
+
+logfile = '%s/afile.log' % os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# show("log file is %s" % (logfile), 10)
+
+
+def show(message, level=5):
+    """Solve a wierd pylint issue, and make it easy to silence the output."""
+    message = "PowerDNSAdmin api -> %s" % (message)
+    log_fv = open(logfile, 'a')
+    log_fv.write('%s\n' % message)
+    log_fv.close()
+    if SHOWLOG:
+        if level > 5:
+            print(message)
+
+
+def getconfigfile():
+    """Get the config file consistently."""
+    exepath = os.path.dirname(os.path.realpath(__file__))
+    oneup = os.path.abspath(os.path.join(exepath, ".."))
+    cnfgfile = '%s/%s' % (oneup, 'serverkeys.cfg')
+    show("server keys cfg file is %s" % (cnfgfile))
+    return cnfgfile
 
 
 def getheadervalue(headers, value):
@@ -29,20 +55,6 @@ def getheadervalue(headers, value):
     if DBGHDR:
         show('getheadervalue -> %s is %s' % (value, retval))
     return retval
-
-
-def show(val):
-    """Solve a wierd pylint issue, and make it easy to silence the output."""
-    print(val)
-
-
-def getconfigfile():
-    """Get the config file consistently."""
-    exepath = os.path.dirname(os.path.realpath(__file__))
-    oneup = os.path.abspath(os.path.join(exepath, ".."))
-    cnfgfile = '%s/%s' % (oneup, 'serverkeys.cfg')
-    show("server keys cfg file is %s" % (cnfgfile))
-    return cnfgfile
 
 
 def token_verify():
@@ -155,33 +167,48 @@ def token_request():
     return jsonify(status=status, encryptedtoken=encryptedtoken)
 
 
-@app.route('/api', methods=['GET', 'POST', 'PATCH'])
-def api():
+@app.route('/addhost', methods=['GET', 'POST', 'PATCH'])
+def addhost():
     """Let us test the api from a brower so I can debug the damn thing."""
     # first authenticate
     show("Begin api route #########################################\n\n")
+    retval = 'begin'
     if not token_verify():
         retval = jsonify(retval='No Token')
+    username = getheadervalue(request.headers, 'X-API-User')
 
-    rec = Record()
-    if DBGREQUEST:
-        show("\n\n\n\n\nForm")
-        pprint(request.form)
-        show("\nValues")
-        pprint(request.values)
-        show("\nRequest Data")
-        pprint(request.data)
+    recorddata = json.loads(request.data)
+    show("print of recorddata is :\n%s" % (recorddata), level=6)
+    if 'name' in recorddata and 'ipaddr' in recorddata:
+        show("pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
+        show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
+        # , type_='A', ttl=86400, disabled=False
+        # pdnsdata = build_rrset(name=recorddata['name'], ipaddr=recorddata['ipaddr'])
+        # show("print of pdnsdata is :\n%s" % (pformat(pdnsdata, indent=4)), level=6)
+        # , rrsetid=None)
+        rec = Record(name=recorddata['name'], type='A', status=True, ttl=86400, data=recorddata['ipaddr'])
+        rec.add('spotx.tv', username)
 
-    data = json.loads(request.data)
-    netdata = {'rrsets': data}
-    if DBGDATA:
-        show('request.data is type %s' % (type(data)))
-        show("print of netdata is :\n%s" % (data))
-        pprint(data)
-        show("\n\n")
-        show("print of netdata is :\n%s" % (netdata))
-        pprint(netdata)
-        show("netdata is :\n%s" % (netdata))
+    # rec = Record()
+    # if DBGREQUEST:
+        # show("\n\n\n\n\nForm")
+        # pprint(request.form)
+        # show("\nValues")
+        # pprint(request.values)
+        # show("\nRequest Data")
+        # pprint(request.data)
 
-    retval = rec.api_serverconnect('spotx.tv', netdata)
+    # data = json.loads(request.data)
+    # netdata = {'rrsets': data}
+    # if DBGDATA:
+        # show('request.data is type %s' % (type(data)))
+        # show("print of netdata is :\n%s" % (data))
+        # pprint(data)
+        # show("\n\n")
+        # show("print of netdata is :\n%s" % (netdata))
+        # pprint(netdata)
+        # show("netdata is :\n%s" % (netdata))
+
+    # retval = rec.api_serverconnect('spotx.tv', netdata)
+    # show("api retval is :\n%s" % (retval), level=10)
     return jsonify(retval=retval)

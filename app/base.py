@@ -3,16 +3,18 @@ Base Classes
 """
 
 import itertools
+# pylint: disable=E0401
 import urlparse
 import re
 import traceback
 
 from distutils.util import strtobool
-import dns.reversename
 
 from flask_login import AnonymousUserMixin, current_user
 from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
+# pylint: disable=e0611
 from app.lib import utils
+import dns.reversename
 from .models import History, Domain, DomainSetting, Setting, Rrset
 # pylint: disable=W0703,R1705
 
@@ -82,7 +84,7 @@ class Record(object):
 
         return jdata
 
-    def add(self, domain):
+    def add(self, domain, created_by=None):
         """
         Add a record to domains
         """
@@ -92,6 +94,7 @@ class Record(object):
         records = rec['records']
         check = filter(lambda check: check['name'] == self.name, records)
         if check:
+            # pylint: disable=E1136
             rec = check[0]
             if rec['type'] in ('A', 'AAAA', 'CNAME'):
                 return {'status': 'error', 'msg': 'Record already exists with type "A", "AAAA" or "CNAME"'}
@@ -120,26 +123,30 @@ class Record(object):
         try:
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
             jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
-            LOGGING.debug(jdata)
+            LOGGING.debug('fetch_json result %s', jdata)
+            self.history_write(domain, '', data['rrsets'], 'REPLACE', name=self.name, created_by=created_by)
             return {'status': 'ok', 'msg': 'Record was added successfully'}
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",
                           self.name, self.type, self.data, domain, str(e))
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
-    def api_serverconnect(self, domain, data):
-        """Connect to server on behalf of api"""
-        headers = {}
-        headers['X-API-Key'] = PDNS_API_KEY
-        print "\n\napi_serverconnect %s %s\n\n" % (domain, data)
-        try:
-            url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
-            jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
-            LOGGING.debug(jdata)
-            return {'status': 'ok', 'msg': 'Success api server connect', 'returndata': jdata}
-        except Exception as e:
-            LOGGING.error("Fail base.py api_serverconnect api server connect")
-            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+    # def api_serverconnect(self, domain, data):
+    #    """Connect to server on behalf of api"""
+    #    headers = {}
+    #    headers['X-API-Key'] = PDNS_API_KEY
+    #    print("\n\napi_serverconnect %s %s\n\n" % (domain, data))
+    #    try:
+    #        url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+    #        LOGGING.debug('The data sent to the Powerdns server follows')
+    #        LOGGING.debug(data)
+    #        jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
+    #        LOGGING.debug('The data returned from the Powerdns server follows')
+    #        LOGGING.debug(jdata)
+    #        return {'status': 'ok', 'msg': 'Success api server connect', 'returndata': jdata}
+    #    except Exception as e:
+    #        LOGGING.error("Fail base.py api_serverconnect api server connect")
+    #        return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def compare(self, domain_name, new_records):
         """
@@ -307,8 +314,8 @@ class Record(object):
                 self.history_log(final_records, domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
 
-        except Exception, e:
-            LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(e), domain)
+        except Exception as error:
+            LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(error), domain)
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def history_log(self, final_records, domain_name):
@@ -328,12 +335,22 @@ class Record(object):
                     current = self.current_records[testme['current_records']]
                     changetype = 'REPLACE'
                     final = final_records[testme['final_records']]
-                jdata = ''
-                history = History(msg='Apply record change to domain %s' % domain_name, domain=domain_name,
-                                  detail=str(jdata), created_by=current_user.username, fromdata=current, todata=final,
-                                  changetype=changetype)
-                db.session.add(history)
-                db.session.commit()
+                self.history_write(domain_name, current, final, changetype)
+
+    @classmethod
+    def history_write(cls, domain_name, fromdata, todata, changetype, name=None, detail=None, created_by=None):
+        """Write the history record."""
+        if not created_by:
+            created_by = current_user.username
+        if not detail:
+            detail = ''
+        if not fromdata:
+            fromdata = ''
+        history = History(msg='Apply record change to domain %s' % domain_name, name=name, domain=domain_name,
+                          detail=detail, created_by=created_by, fromdata=fromdata, todata=todata,
+                          changetype=changetype)
+        db.session.add(history)
+        db.session.commit()
 
     def final_records_limit(self, final_records):
         """limit the number of replace changes, for LOGGING"""

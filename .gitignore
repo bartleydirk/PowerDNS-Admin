@@ -32,3 +32,4 @@ tmp/*
 *.swp
 admin_api
 *.cfg
+*.log
