@@ -9,7 +9,6 @@ from pprint import pformat
 from flask import request, jsonify
 from admin_api.crypt import Keypair  # , limitlines
 # pylint: disable=E0401
-from admin_api import build_rrset
 from models import User
 
 from app import app, db
@@ -22,14 +21,14 @@ DBGDATA = False
 DBGHDR = False
 SHOWLOG = True
 
-logfile = '%s/afile.log' % os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-# show("log file is %s" % (logfile), 10)
+LOGFILE = '%s/afile.log' % os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# show("log file is %s" % (LOGFILE), 10)
 
 
 def show(message, level=5):
     """Solve a wierd pylint issue, and make it easy to silence the output."""
     message = "PowerDNSAdmin api -> %s" % (message)
-    log_fv = open(logfile, 'a')
+    log_fv = open(LOGFILE, 'a')
     log_fv.write('%s\n' % message)
     log_fv.close()
     if SHOWLOG:
@@ -62,18 +61,22 @@ def token_verify():
     # get the headers we can from the client
     username = getheadervalue(request.headers, 'X-API-User')
     encryptedtoken = getheadervalue(request.headers, 'X-API-Key')
-    show("token_check -> encryptedtoken = %s" % (encryptedtoken))
+    show("token_check -> encryptedtoken = %s" % (encryptedtoken), level=6)
+    signature = getheadervalue(request.headers, 'X-API-Signature')
+    show("token_check -> signature = %s" % (signature), level=6)
 
     cnfgfile = getconfigfile()
     server_keypair = Keypair(cnfgfile=cnfgfile)
     client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
-    show(server_keypair)
+    # show(server_keypair)
     token_fromclient = server_keypair.decrypt(encryptedtoken)
     show("token_check -> token_fromclient     = '%s'" % (token_fromclient))
     show("token_check -> server_keypair.token = '%s'" % (client_keypair.token))
-
     retval = False
     if token_fromclient == client_keypair.token:
+        verified = client_keypair.verify(encryptedtoken, signature)
+        if verified:
+            pass
         retval = True
     show("token_verify -> returning = %s" % (retval))
     return retval
@@ -126,6 +129,7 @@ def checkkeys():
 def token_check():
     """Exchange keys."""
     show("Begin token_check route #########################################\n\n")
+    # os.unlink(LOGFILE)
     if token_verify():
         status = 'Token Success'
     else:
