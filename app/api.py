@@ -76,8 +76,7 @@ def token_verify():
     if token_fromclient == client_keypair.token:
         verified = client_keypair.verify(encryptedtoken, signature)
         if verified:
-            pass
-        retval = True
+            retval = True
     show("token_verify -> returning = %s" % (retval))
     return retval
 
