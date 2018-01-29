@@ -61,17 +61,17 @@ def token_verify():
     # get the headers we can from the client
     username = getheadervalue(request.headers, 'X-API-User')
     encryptedtoken = getheadervalue(request.headers, 'X-API-Key')
-    show("token_check -> encryptedtoken = %s" % (encryptedtoken), level=6)
+    show("token_verify -> encryptedtoken = %s" % (encryptedtoken), level=6)
     signature = getheadervalue(request.headers, 'X-API-Signature')
-    show("token_check -> signature = %s" % (signature), level=6)
+    show("token_verify -> signature = %s" % (signature), level=6)
 
     cnfgfile = getconfigfile()
     server_keypair = Keypair(cnfgfile=cnfgfile)
     client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
     # show(server_keypair)
     token_fromclient = server_keypair.decrypt(encryptedtoken)
-    show("token_check -> token_fromclient     = '%s'" % (token_fromclient))
-    show("token_check -> server_keypair.token = '%s'" % (client_keypair.token))
+    show("token_verify -> token_fromclient     = '%s'" % (token_fromclient))
+    show("token_verify -> server_keypair.token = '%s'" % (client_keypair.token))
     retval = False
     if token_fromclient == client_keypair.token:
         verified = client_keypair.verify(encryptedtoken, signature)
@@ -129,11 +129,20 @@ def token_check():
     """Exchange keys."""
     show("Begin token_check route #########################################\n\n")
     # os.unlink(LOGFILE)
+    encryptedtoken = None
     if token_verify():
         status = 'Token Success'
+        # generate and save a token in the cfg file
+        username = getheadervalue(request.headers, 'X-API-User')
+        show('token_check username "%s"' % (username))
+        client_keypair = Keypair(cnfgfile=getconfigfile(), username=username)
+        token_ = client_keypair.gentoken()
+        encryptedtoken = client_keypair.encrypt(token_)
+
+        client_keypair.saveclientonserver(token_=token_)
     else:
         status = 'Token Fail'
-    return jsonify(status=status)
+    return jsonify(status=status, encryptedtoken=encryptedtoken)
 
 
 @app.route('/token_request', methods=['GET', 'POST', 'PATCH'])
