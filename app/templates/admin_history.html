@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% import 'historymacros.html' as histhtml %}
+{% import 'history.js' as histjs %}
 
 {% block title %}
 <title>DNS Control Panel - History</title>
@@ -53,7 +55,9 @@
                                 <td>{{ history.domainname }}</td>
                                 <td>{{ history.changetype }}</td>
                                 <td width="6%">
-                                    <button type="button" class="btn btn-flat btn-primary history-info-button" value='{{ history.id }}'>Info&nbsp;<i class="fa fa-info"></i></button>
+                                    <button type="button"
+                                            class="btn btn-flat btn-primary history-info-button"
+                                            value='{{ history.id }}'>Info&nbsp;<i class="fa fa-info"></i></button>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -100,74 +104,17 @@
                 console.log("In Success " + retdat.retval)
                 var modal = $("#modal_history_info");
                 var show = JSON.stringify(retdat.retval, null, '\t');
-                //json_library.prettyPrint(retdat.retval)
                 $('#modal-code-content').html(show);
                 modal.modal('show');
-                //if (showResult) {
-                //    var modal = $("#modal_success");
-                //    modal.find('.modal-body p').text("Applied changes successfully");
-                //    modal.modal('show');
-                //}
-                //if (refreshPage) {
-                //    location.reload(true);
-                //}
             }
         });
 
         console.log('history-info-button the historyid be "' + historyid + '"');
-        //$('#modal-code-content').html(json_library.prettyPrint(info));
-        //modal.modal('show');
     });
 </script>
 {% endblock %} 
 
 
 {% block modals %}
-<!-- Clear History Confirmation Box -->
-<div class="modal fade modal-warning" id="modal_clear_history">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"
-                    aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">Confirmation</h4>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to remove all history?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-flat btn-default pull-left"
-                    data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-flat btn-danger" onclick="applyChanges('', $SCRIPT_ROOT + '/admin/history');location.reload();">Clear History</button>
-            </div>
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-</div>
-<div class="modal fade" id="modal_history_info">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"
-                    aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">History Details</h4>
-            </div>
-            <div class="modal-body">
-                <pre><code id="modal-code-content"></code></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-flat btn-default pull-right"
-                    data-dismiss="modal">Close</button>
-            </div>
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-</div>
-<!-- /.modal -->
+{{ histhtml.hitsorymodals(from='history') }}
 {% endblock %}

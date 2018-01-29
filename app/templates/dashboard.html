@@ -1,4 +1,6 @@
 {% extends "base.html" %}
+{% import 'historymacros.html' as histhtml %}
+{% import 'history.js' as histjs %}
 {% block title %}<title>DNS Control Panel - HOME</title>{% endblock %}
 
 {% block dashboard_stat %}
@@ -106,8 +108,9 @@
                                 <td>{{ history.msg }}</td>
                                 <td>{{ history.created_on }}</td>
                                 <td width="6%">
-                                    <button type="button" class="btn btn-flat btn-primary history-info-button" value='{{ history.detail|replace("[]","None") }}'>
-                                        Info&nbsp;<i class="fa fa-info"></i>
+                                    <button type="button"
+                                            class="btn btn-flat btn-primary history-info-button"
+                                            value='{{ history.id }}'>Info&nbsp;<i class="fa fa-info"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -206,15 +209,6 @@
 {% endblock %}
 {% block extrascripts %}
 <script>
-    // set up history data table
-    $("#tbl_history").DataTable({
-        "paging" : false,
-        "lengthChange" : false,
-        "searching" : false,
-        "ordering" : false,
-        "info" : false,
-        "autoWidth" : false
-    });   
     // set up domain list
     $("#tbl_domain_list").DataTable({
         "paging" : true,
@@ -223,72 +217,24 @@
         "ordering" : true,
         "info" : false,
         "autoWidth" : false,
-	    {% if default_domain_table_size_setting in ['10','25','50','100'] %}
-	    "lengthMenu": [ [10, 25, 50, 100, -1],
-	                    [10, 25, 50, 100, "All"]],
-	    {% else %}
-	    "lengthMenu": [ [10, 25, 50, 100, {{ default_domain_table_size_setting }}, -1],
-	                    [10, 25, 50, 100, {{ default_domain_table_size_setting }}, "All"]],
-	    {% endif %}
-	    "pageLength": {{ default_domain_table_size_setting }}
-    });
-    $(document.body).on('click', '.history-info-button', function() {
-        var modal = $("#modal_history_info");
-        var info = $(this).val();
-        $('#modal-code-content').html(json_library.prettyPrint(info));
-        modal.modal('show');
+        {% if default_domain_table_size_setting in ['10','25','50','100'] %}
+        "lengthMenu": [ [10, 25, 50, 100, -1],
+                        [10, 25, 50, 100, "All"]],
+        {% else %}
+        "lengthMenu": [ [10, 25, 50, 100, {{ default_domain_table_size_setting }}, -1],
+                        [10, 25, 50, 100, {{ default_domain_table_size_setting }}, "All"]],
+        {% endif %}
+        "pageLength": {{ default_domain_table_size_setting }}
     });
     $(document.body).on("click", ".button_dnssec", function() {
         var domain = $(this).prop('id');
         getdnssec($SCRIPT_ROOT + '/domain/' + domain + '/dnssec');
     });
+{{ histjs.hostoryjs() }}
 </script>
 {% endblock %}
+
+
 {% block modals %}
-<div class="modal fade" id="modal_history_info">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"
-                    aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">History Details</h4>
-            </div>
-            <div class="modal-body">
-                <pre><code id="modal-code-content"></code></pre>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-flat btn-default pull-right"
-                    data-dismiss="modal">Close</button>
-            </div>
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-</div>
-<!-- /.modal -->
-<div class="modal fade" id="modal_dnssec_info">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal"
-                    aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                <h4 class="modal-title">DNSSEC</h4>
-            </div>
-            <div class="modal-body">
-                <p></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-flat btn-default pull-right"
-                    data-dismiss="modal">Close</button>
-            </div>
-        </div>
-        <!-- /.modal-content -->
-    </div>
-    <!-- /.modal-dialog -->
-</div>
-<!-- /.modal -->
+{{ histhtml.hitsorymodals(from='dashboard') }}
 {% endblock %}
