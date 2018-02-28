@@ -198,7 +198,7 @@ def addhost():
         # pdnsdata = build_rrset(name=recorddata['name'], ipaddr=recorddata['ipaddr'])
         # show("print of pdnsdata is :\n%s" % (pformat(pdnsdata, indent=4)), level=6)
         # , rrsetid=None)
-        rec = Record(name=recorddata['name'], type='A', status=True, ttl=86400, data=recorddata['ipaddr'])
+        rec = Record(name=recorddata['name'], type='A', status=False, ttl=86400, data=recorddata['ipaddr'])
         rec.add('spotx.tv', username)
 
     # rec = Record()

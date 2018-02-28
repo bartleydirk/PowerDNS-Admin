@@ -32,7 +32,7 @@ class Record(object):
     """
 
     # pylint: disable=C0103,R0913,W0622
-    def __init__(self, name=None, type=None, status=None, ttl=None, data=None, rrsetid=None):
+    def __init__(self, name=None, type=None, status=False, ttl=None, data=None, rrsetid=None):
         self.name = name
         self.type = type
         self.status = status
@@ -193,6 +193,8 @@ class Record(object):
                       "content": r['record_data'],
                       "disabled": True if r['record_status'] == 'Disabled' else False,
                       "ttl": int(r['record_ttl']) if r['record_ttl'] else 3600, }
+            #if r_name == 'freddy.spotx.tv':
+            #    pprint(asdf)
             records.append(record)
 
         deleted_records, new_records = self.compare(domain, records)
@@ -355,6 +357,7 @@ class Record(object):
     def final_records_limit(self, final_records):
         """limit the number of replace changes, for LOGGING"""
         # pylint: disable=R0912,R0915
+        # a key to unique identify 
         self.unique_key = {}
         notcurrent = []
         re_endindot = re.compile(r'\.$')
@@ -382,6 +385,7 @@ class Record(object):
         samecnt = 0
         lencnt = 0
         ttlcnt = 0
+        discnt = 0
         reccnt = 0
         for key in self.unique_key:
             # now for this record we can find if it is the same or edited
@@ -414,6 +418,10 @@ class Record(object):
                 if current['ttl'] != final['ttl']:
                     same = False
                     ttlcnt += 1
+                # test for disabled being the same
+                if len(final['records']) > 0 and current['disabled'] != final['records'][0]['disabled']:
+                    same = False
+                    discnt += 1
                 if same:
                     samecnt += 1
                 testme['same'] = same
