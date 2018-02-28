@@ -634,7 +634,8 @@ class Domain(db.Model):
             self.update()
             if result['status'] == 'ok':
                 history = History(msg='Add reverse lookup domain %s' % domain_reverse_name,
-                                  detail=str({'domain_type': 'Master', 'domain_master_ips': ''}), created_by='System')
+                                  detail=str({'domain_type': 'Master', 'domain_master_ips': ''}),
+                                  created_by='System')
                 history.add()
             else:
                 return {'status': 'error', 'msg': 'Adding reverse lookup domain failed'}

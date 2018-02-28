@@ -43,6 +43,8 @@ class Record(object):
         self.unique_key = None
         self.rrsetid = rrsetid
         self.records_delete = []
+        self.net_final = []
+        self.fnl_recs = []
 
     def get_record_data(self, domain):
         """
@@ -250,7 +252,7 @@ class Record(object):
 
         # Adjustment to add multiple records which described in
         # https://github.com/ngoduykhanh/PowerDNS-Admin/issues/5#issuecomment-181637576
-        final_records = []
+        self.fnl_recs = []
         records = sorted(records, key=lambda item: (item["name"], item["type"], item["changetype"]))
         for key, group in itertools.groupby(records, lambda item: (item["name"], item["type"], item["changetype"])):
             if NEW_SCHEMA:
@@ -281,11 +283,11 @@ class Record(object):
                         "content": temp_content,
                         "disabled": temp_disabled
                     })
-                final_records.append(new_record)
+                self.fnl_recs.append(new_record)
 
             else:
 
-                final_records.append({"name": key[0],
+                self.fnl_recs.append({"name": key[0],
                                       "type": key[1],
                                       "changetype": key[2],
                                       "records": [{"content": item['records'][0]['content'],
@@ -294,33 +296,34 @@ class Record(object):
                                                    "ttl": item['records'][0]['ttl'],
                                                    "type": key[1],
                                                    "priority": 10, } for item in group]})
+        self.final_records_limit()
+        postdata_for_changes = {"rrsets": self.fnl_recs}
 
-        postdata_for_new = {"rrsets": self.final_records_limit(final_records)}
-
-        # if True:
         try:
-            # move this to after fetch_jason
             headers = {}
             headers['X-API-Key'] = PDNS_API_KEY
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
             # utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_delete)
-            jdata2 = utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_new)
+            jdata2 = utils.fetch_json(url, headers=headers, method='PATCH', data=postdata_for_changes)
 
             if 'error' in jdata2.keys():
                 LOGGING.error('Cannot apply record changes.')
                 LOGGING.debug(jdata2['error'])
                 return {'status': 'error', 'msg': jdata2['error']}
             else:
-                self.auto_ptr(domain, new_records, deleted_records)
+                # should this get postdata_for_changes ??? instead of the deprecated new_records, deleted_records
+                # postdata_for_changes is final_records_limit
+                if not re.search('in-addr.arpa', domain):
+                    self.auto_ptr(domain, new_records, deleted_records)
                 LOGGING.info('Record was applied successfully.')
-                self.history_log(final_records, domain)
+                self.history_log(domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
 
         except Exception as error:
             LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(error), domain)
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
-    def history_log(self, final_records, domain_name):
+    def history_log(self, domain_name):
         """Write history Record to database"""
         for key in self.unique_key:
             testme = self.unique_key[key]
@@ -328,15 +331,15 @@ class Record(object):
                 if testme['change_type'] == 'ADD':
                     current = None
                     changetype = 'ADD'
-                    final = final_records[testme['final_records']]
+                    final = self.fnl_recs[testme['final_records']]
                 elif testme['change_type'] == 'DELETE':
                     current = None
                     changetype = 'DELETE'
-                    final = final_records[testme['delete_records']]
+                    final = self.fnl_recs[testme['delete_records']]
                 else:
                     current = self.current_records[testme['current_records']]
                     changetype = 'REPLACE'
-                    final = final_records[testme['final_records']]
+                    final = self.fnl_recs[testme['final_records']]
                 self.history_write(domain_name, current, final, changetype)
 
     @classmethod
@@ -354,15 +357,15 @@ class Record(object):
         db.session.add(history)
         db.session.commit()
 
-    def final_records_limit(self, final_records):
+    def final_records_limit(self):
         """limit the number of replace changes, for LOGGING"""
         # pylint: disable=R0912,R0915
-        # a key to unique identify 
+        # a key to unique identify all records wether added, deleted or modified
         self.unique_key = {}
         notcurrent = []
         re_endindot = re.compile(r'\.$')
         typeavoid = ['SOA', 'NS']
-        for position, item in enumerate(final_records):
+        for position, item in enumerate(self.fnl_recs):
             if item['type'] not in typeavoid:
                 key = (item['name'], item['type'])
                 self.unique_key[key] = {'final_records': position, 'same': False}
@@ -382,6 +385,9 @@ class Record(object):
                     notcurrent.append(key)
                     self.unique_key[key] = {'current_records': position, 'same': False}
 
+        # Now we know the list of all records modified, and we know what position they are in the lists of
+        # self.current_records and self.fnl_recs
+
         samecnt = 0
         lencnt = 0
         ttlcnt = 0
@@ -399,7 +405,7 @@ class Record(object):
             elif 'current_records' in testme and 'final_records' in testme and 'delete_records' not in testme:
                 testme['change_type'] = 'REPLACE'
                 current = self.current_records[testme['current_records']]
-                final = final_records[testme['final_records']]
+                final = self.fnl_recs[testme['final_records']]
                 same = True
                 # test for the number of records
                 if len(current['records']) != len(final['records']):
@@ -426,21 +432,22 @@ class Record(object):
                     samecnt += 1
                 testme['same'] = same
 
-        net_final = []
+        self.net_final = []
         for key in self.unique_key:
             testme = self.unique_key[key]
             if testme['same'] is False:
                 if testme['change_type'] == 'DELETE':
-                    net_final.append(self.records_delete[testme['delete_records']])
+                    self.net_final.append(self.records_delete[testme['delete_records']])
                 else:
-                    net_final.append(final_records[testme['final_records']])
-        return net_final
+                    self.net_final.append(self.fnl_recs[testme['final_records']])
+        return
 
     def auto_ptr(self, domain, new_records, deleted_records):
         """
         Add auto-ptr records
         """
         retval = None
+
         domain_obj = Domain.query.filter(Domain.name == domain).first()
         domain_auto_ptr = DomainSetting.query.filter(DomainSetting.domain == domain_obj) \
                                              .filter(DomainSetting.setting == 'auto_ptr') \
@@ -449,38 +456,72 @@ class Record(object):
 
         system_auto_ptr = Setting.query.filter(Setting.name == 'auto_ptr').first()
         system_auto_ptr = strtobool(system_auto_ptr.value)
-
+        
         if system_auto_ptr or domain_auto_ptr:
-            try:
-                d = Domain()
-                for r in new_records:
-                    if r['type'] in ['A', 'AAAA']:
-                        r_name = r['name'] + '.'
-                        r_content = r['content']
+            dom_ = Domain()
+            for key in self.unique_key:
+                testme = self.unique_key[key]
+                if testme['same'] is False:
+                    delrec = None
+                    if 'delete_records' in testme:
+                        delrec = self.records_delete[testme['delete_records']]
+                    current = None
+                    if 'current_records' in testme:
+                        current = self.current_records[testme['current_records']]
+                    final = None
+                    if 'final_records' in testme:
+                        final = self.fnl_recs[testme['final_records']]
+                    if testme['change_type'] == 'DELETE':
+                        r_name = current['name'] + '.'
+                        r_content = current['content']
                         reverse_host_address = dns.reversename.from_address(r_content).to_text()
-                        domain_reverse_name = d.get_reverse_domain_name(reverse_host_address)
-                        d.create_reverse_domain(domain, domain_reverse_name)
-                        self.name = dns.reversename.from_address(r_content).to_text().rstrip('.')
-                        self.type = 'PTR'
-                        self.status = r['disabled']
-                        self.ttl = r['ttl']
-                        self.data = r_name
-                        self.add(domain_reverse_name)
-                for r in deleted_records:
-                    if r['type'] in ['A', 'AAAA']:
-                        r_name = r['name'] + '.'
-                        r_content = r['content']
-                        reverse_host_address = dns.reversename.from_address(r_content).to_text()
-                        domain_reverse_name = d.get_reverse_domain_name(reverse_host_address)
+                        domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
                         self.name = reverse_host_address
                         self.type = 'PTR'
                         self.data = r_content
                         self.delete(domain_reverse_name)
-                retval = {'status': 'ok', 'msg': 'Auto-PTR record was updated successfully'}
-            except Exception as e:
-                LOGGING.error("Cannot update auto-ptr record changes to domain %s. DETAIL: %s", str(e), domain)
-                retval = {'status': 'error',
-                          'msg': 'Auto-PTR creation failed. There was something wrong, please contact administrator.'}
+                        pprint(qpwriweoriuo)
+                        pass
+                    else:
+                        r_name = current['name'] + '.'
+                        r_content = current['content']
+                        reverse_host_address = dns.reversename.from_address(r_content).to_text()
+                        domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
+                        dom_.create_reverse_domain(domain, domain_reverse_name)
+                        pass
+
+            #try:
+            #if True:
+            #    pprint(afsd)
+            #    for rec in new_records:
+            #        if rec['type'] in ['A', 'AAAA']:
+            #            r_name = rec['name'] + '.'
+            #            r_content = rec['content']
+            #            reverse_host_address = dns.reversename.from_address(r_content).to_text()
+            #            domain_reverse_name = d.get_reverse_domain_name(reverse_host_address)
+            #            dom_.create_reverse_domain(domain, domain_reverse_name)
+            #            self.name = dns.reversename.from_address(r_content).to_text().rstrip('.')
+            #            self.type = 'PTR'
+            #            self.status = rec['disabled']
+            #            self.ttl = rec['ttl']
+            #            self.data = r_name
+            #            self.add(domain_reverse_name)
+            #    for rec in deleted_records:
+            #        if rec['type'] in ['A', 'AAAA']:
+            #            r_name = rec['name'] + '.'
+            #            r_content = rec['content']
+            #            reverse_host_address = dns.reversename.from_address(r_content).to_text()
+            #            domain_reverse_name = d.get_reverse_domain_name(reverse_host_address)
+            #            self.name = reverse_host_address
+            #            self.type = 'PTR'
+            #            self.data = r_content
+            #            self.delete(domain_reverse_name)
+            #            pprint(qpwriweoriuo)
+            #    retval = {'status': 'ok', 'msg': 'Auto-PTR record was updated successfully'}
+            #except Exception as e:
+            #    LOGGING.error("Cannot update auto-ptr record changes to domain %s. DETAIL: %s", str(e), domain)
+            #    retval = {'status': 'error',
+            #              'msg': 'Auto-PTR creation failed. There was something wrong, please contact administrator.'}
         return retval
 
     def delete(self, domain):
