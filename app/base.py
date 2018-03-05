@@ -315,6 +315,10 @@ class Record(object):
                 # postdata_for_changes is final_records_limit
                 if not re.search('in-addr.arpa', domain):
                     self.auto_ptr(domain, new_records, deleted_records)
+
+                LOGGING.debug("update dyndns data: %s", postdata_for_changes)
+                LOGGING.debug("update dyndns url: %s", url)
+
                 LOGGING.info('Record was applied successfully.')
                 self.history_log(domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
@@ -567,7 +571,7 @@ class Record(object):
                 return True
         return False
 
-    def update(self, domain, content):
+    def update(self, domain, content, isreverse=False):
         """
         Update single record
         """
@@ -575,7 +579,7 @@ class Record(object):
         headers['X-API-Key'] = PDNS_API_KEY
 
         if NEW_SCHEMA:
-            data = {"rrsets": [{"name": self.name + '.',
+            data = {"rrsets": [{"name": self.name,
                                 "type": self.type,
                                 "ttl": self.ttl,
                                 "changetype": "REPLACE",
@@ -594,7 +598,8 @@ class Record(object):
         try:
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
             utils.fetch_json(url, headers=headers, method='PATCH', data=data)
-            LOGGING.debug("dyndns data: %s", data)
+            LOGGING.debug("update dyndns data: %s", data)
+            LOGGING.debug("update dyndns url: %s", url)
             return {'status': 'ok', 'msg': 'Record was updated successfully'}
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",

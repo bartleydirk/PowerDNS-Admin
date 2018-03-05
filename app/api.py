@@ -12,6 +12,7 @@ from admin_api.crypt import Keypair  # , limitlines
 from models import User
 
 from app import app, db
+from app.models import Domain
 # from app.models import User, Domain, History, Setting, DomainSetting
 # pylint: disable=E0401,E0001
 from .base import Record
@@ -34,6 +35,25 @@ def show(message, level=5):
     if SHOWLOG:
         if level > 5:
             print(message)
+
+
+def get_domain_fromname(name):
+    name_split = name.split('.')
+    name_split.reverse()
+    test = ''
+    for item in name_split:
+        if item != '':
+            if test == '':
+                test = "%s" % (item)
+            else:
+                test = "%s.%s" % (item, test)
+            #show("get_domain_fromname of testing is :%s" % (test), level=6)
+            mdl = db.session.query(Domain)\
+                    .filter(Domain.name == test)\
+                    .first()
+            if mdl:
+                return mdl.name
+    return None
 
 
 def getconfigfile():
@@ -193,13 +213,18 @@ def addhost():
     show("print of recorddata is :\n%s" % (recorddata), level=6)
     if 'name' in recorddata and 'ipaddr' in recorddata:
         show("pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
-        show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
+        name = recorddata['name']
+        show("name is :%s" % (name), level=6)
+        domainname = get_domain_fromname(name)
+        #show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
         # , type_='A', ttl=86400, disabled=False
         # pdnsdata = build_rrset(name=recorddata['name'], ipaddr=recorddata['ipaddr'])
         # show("print of pdnsdata is :\n%s" % (pformat(pdnsdata, indent=4)), level=6)
         # , rrsetid=None)
-        rec = Record(name=recorddata['name'], type='A', status=False, ttl=86400, data=recorddata['ipaddr'])
-        rec.add('spotx.tv', username)
+        domain_reverse_name = dom_.get_reverse_domain_name(revname) + '.'
+
+        rec = Record(name=name, type='A', status=False, ttl=86400, data=recorddata['ipaddr'])
+        rec.add(domainname, username)
 
     # rec = Record()
     # if DBGREQUEST:
@@ -223,4 +248,35 @@ def addhost():
 
     # retval = rec.api_serverconnect('spotx.tv', netdata)
     # show("api retval is :\n%s" % (retval), level=10)
+    return jsonify(retval=retval)
+
+@app.route('/fixrev', methods=['GET', 'POST', 'PATCH'])
+def fixrev():
+    """Let us test the api from a brower so I can debug the damn thing."""
+    # first authenticate
+    show("Begin api route #########################################\n\n")
+    retval = 'begin'
+    if not token_verify():
+        retval = jsonify(retval='No Token')
+    username = getheadervalue(request.headers, 'X-API-User')
+    dom_ = Domain()
+
+    recorddata = json.loads(request.data)
+    show("fixrev print of recorddata is :\n%s" % (recorddata), level=6)
+    if 'hostname' in recorddata and 'revname' in recorddata:
+        show("fixrev pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
+        hostname = recorddata['hostname'] + '.'
+        revname = recorddata['revname']
+        revnamewdot = recorddata['revname'] + '.'
+        # name = revname
+        #namespl = revname.split('.')
+        #if namespl > 0:
+        #    name = namespl[0]
+
+        domain_reverse_name = dom_.get_reverse_domain_name(revname)
+        show("fixrev name is :%s revname is %s domain_reverse_name %s" % (hostname, revname, domain_reverse_name), level=6)
+
+        rec = Record(name=revnamewdot, type='PTR', status=False, ttl=86400, data=hostname)
+        rec.update(domain_reverse_name, hostname, isreverse=True)
+
     return jsonify(retval=retval)
