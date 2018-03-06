@@ -195,8 +195,6 @@ class Record(object):
                       "content": r['record_data'],
                       "disabled": True if r['record_status'] == 'Disabled' else False,
                       "ttl": int(r['record_ttl']) if r['record_ttl'] else 3600, }
-            #if r_name == 'freddy.spotx.tv':
-            #    pprint(asdf)
             records.append(record)
 
         deleted_records, new_records = self.compare(domain, records)
@@ -297,7 +295,8 @@ class Record(object):
                                                    "type": key[1],
                                                    "priority": 10, } for item in group]})
         self.final_records_limit()
-        postdata_for_changes = {"rrsets": self.fnl_recs}
+        #postdata_for_changes = {"rrsets": self.fnl_recs}
+        postdata_for_changes = {"rrsets": self.net_final}
 
         try:
             headers = {}
