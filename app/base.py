@@ -124,6 +124,7 @@ class Record(object):
 
         try:
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            LOGGING.debug('add data to pdns server %s', data)
             jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
             LOGGING.debug('fetch_json result %s', jdata)
             self.history_write(domain, '', data['rrsets'], 'REPLACE', name=self.name, created_by=created_by)
@@ -527,7 +528,7 @@ class Record(object):
             #              'msg': 'Auto-PTR creation failed. There was something wrong, please contact administrator.'}
         return retval
 
-    def delete(self, domain):
+    def delete(self, domain, username=None):
         """
         Delete a record from domain
         """

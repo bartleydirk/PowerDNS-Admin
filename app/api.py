@@ -211,7 +211,7 @@ def addhost():
 
     recorddata = json.loads(request.data)
     show("print of recorddata is :\n%s" % (recorddata), level=6)
-    if 'name' in recorddata and 'ipaddr' in recorddata:
+    if 'name' in recorddata and 'content' in recorddata:
         show("pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
         name = recorddata['name']
         show("name is :%s" % (name), level=6)
@@ -221,34 +221,49 @@ def addhost():
         # pdnsdata = build_rrset(name=recorddata['name'], ipaddr=recorddata['ipaddr'])
         # show("print of pdnsdata is :\n%s" % (pformat(pdnsdata, indent=4)), level=6)
         # , rrsetid=None)
-        domain_reverse_name = dom_.get_reverse_domain_name(revname) + '.'
+        ttl = 86400
+        if 'ttl' in recorddata:
+            ttl = int(recorddata['ttl'])
+        rectype = 'A'
+        if 'rectype' in recorddata:
+            rectype = recorddata['rectype']
 
-        rec = Record(name=name, type='A', status=False, ttl=86400, data=recorddata['ipaddr'])
+        rec = Record(name=name, type=rectype, status=False, ttl=ttl, data=recorddata['content'])
         rec.add(domainname, username)
 
-    # rec = Record()
-    # if DBGREQUEST:
-        # show("\n\n\n\n\nForm")
-        # pprint(request.form)
-        # show("\nValues")
-        # pprint(request.values)
-        # show("\nRequest Data")
-        # pprint(request.data)
-
-    # data = json.loads(request.data)
-    # netdata = {'rrsets': data}
-    # if DBGDATA:
-        # show('request.data is type %s' % (type(data)))
-        # show("print of netdata is :\n%s" % (data))
-        # pprint(data)
-        # show("\n\n")
-        # show("print of netdata is :\n%s" % (netdata))
-        # pprint(netdata)
-        # show("netdata is :\n%s" % (netdata))
-
-    # retval = rec.api_serverconnect('spotx.tv', netdata)
-    # show("api retval is :\n%s" % (retval), level=10)
     return jsonify(retval=retval)
+
+
+@app.route('/delrec', methods=['GET', 'POST', 'PATCH'])
+def delrec():
+    """Let us test the api from a brower so I can debug the damn thing."""
+    # first authenticate
+    show("Begin api route #########################################\n\n")
+    retval = 'begin'
+    if not token_verify():
+        retval = jsonify(retval='No Token')
+    username = getheadervalue(request.headers, 'X-API-User')
+
+    recorddata = json.loads(request.data)
+    show("print of recorddata is :\n%s" % (recorddata), level=6)
+    if 'name' in recorddata:
+        show("pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
+        name = recorddata['name']
+        show("name is :%s" % (name), level=6)
+        domainname = get_domain_fromname(name)
+
+        if 'ttl' in recorddata:
+            ttl = int(recorddata['ttl'])
+
+        rectype = 'A'
+        if 'rectype' in recorddata:
+            rectype = recorddata['rectype']
+
+        rec = Record(name=name, type=rectype, status=False)
+        rec.delete(domainname, username=username)
+
+    return jsonify(retval=retval)
+
 
 @app.route('/fixrev', methods=['GET', 'POST', 'PATCH'])
 def fixrev():
