@@ -410,8 +410,9 @@ def domain(domain_name):
 @admin_role_required
 def domain_add():
     """Route to add a Domain"""
+    # here here here
     if request.method == 'POST':
-        try:
+        #try:
             domain_name = request.form.getlist('domain_name')[0]
             domain_type = request.form.getlist('radio_type')[0]
             soa_edit_api = request.form.getlist('radio_type_soa_edit_api')[0]
@@ -429,6 +430,30 @@ def domain_add():
             d = Domain()
             result = d.add(domain_name=domain_name, domain_type=domain_type, soa_edit_api=soa_edit_api,
                            domain_master_ips=domain_master_ips)
+
+            # The soa record will show a.misconfigured.powerdns.server
+            rec = Record()
+            recs = rec.get_record_data('pop')
+            soacontent = None
+            nsrecords = None
+            nscontent = None
+            for item in recs['records']:
+                if item['name'] == 'pop' and item['type'] == 'SOA':
+                    soacontent = item['content']
+                if item['type'] == 'NS':
+                    nsrecords = item['records']
+                    nscontent = item['content']
+            
+            if soacontent:
+                soarec = Record(name=domain_name, type='SOA', ttl=3600)
+                soarec.update(domain_name, soacontent)
+            if nsrecords and nscontent:
+                for nsrec in nsrecords:
+                    nsrec_ = Record(name=domain_name, type='NS', ttl=3600)
+                    nsrec_.update(domain_name, nsrec['content'])
+            # end update the record using pop as a base
+            
+            pprint(asdf)
             if result['status'] == 'ok':
                 history = History(msg='Add domain %s' % domain_name,
                                   detail=str({'domain_type': domain_type, 'domain_master_ips': domain_master_ips}),
@@ -437,8 +462,8 @@ def domain_add():
                 return redirect(url_for('dashboard'))
             else:
                 return render_template('errors/400.html', msg=result['msg']), 400
-        except Exception:
-            return redirect(url_for('error', code=500))
+        #except Exception:
+        #    return redirect(url_for('error', code=500))
     return render_template('domain_add.html')
 
 
@@ -504,8 +529,8 @@ def record_apply(domain_name):
                     u'record_status': u'Active', u'record_data': u'duykhanh.me'}
     """
     # TO DO: filter removed records / name modified records.
-    # if True:
-    try:
+    if True:
+    # try:
         pdata = request.form.get('postdata')
         rrsetid = request.form.get('rrsetid', None)
         jdata = json.loads(pdata)
@@ -515,9 +540,9 @@ def record_apply(domain_name):
             return make_response(jsonify(result), 200)
         else:
             return make_response(jsonify(result), 400)
-    except Exception:
-        print traceback.format_exc()
-        return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
+    # except Exception:
+    #    print traceback.format_exc()
+    #    return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
 
 
 @app.route('/domain/<string:domain_name>/update', methods=['POST'], strict_slashes=False)

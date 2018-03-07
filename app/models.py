@@ -600,8 +600,10 @@ class Domain(db.Model):
                          "masters": domain_master_ips,
                          "nameservers": domain_ns,
                          "soa_edit_api": soa_edit_api}
+        #pprint(asdf)
 
-        try:
+        #try:
+        if True:
             jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'),
                                      headers=headers, method='POST', data=post_data)
             if 'error' in jdata.keys():
@@ -610,10 +612,10 @@ class Domain(db.Model):
             else:
                 LOGGING.info('Added domain %s successfully', domain_name)
                 return {'status': 'ok', 'msg': 'Added domain successfully'}
-        except Exception as err:
-            LOGGING.error('Cannot add domain %s', domain_name)
-            traceback.format_exc()
-            LOGGING.debug(str(err))
+        #except Exception as err:
+        #    LOGGING.error('Cannot add domain %s', domain_name)
+        #    traceback.format_exc()
+        #    LOGGING.debug(str(err))
             return {'status': 'error', 'msg': 'Cannot add this domain.'}
 
     def create_reverse_domain(self, domain_name, domain_reverse_name):
@@ -816,6 +818,8 @@ class History(db.Model):
     def __init__(self, id=None, msg=None, detail=None, created_by=None, name=None, changetype=None, fromdata=None,
                  todata=None, domain=None):
         domainid = None
+        if not todata:
+            todata = []
         if domain:
             mdl = db.session.query(Domain.id)\
                     .filter(Domain.name == domain)\
