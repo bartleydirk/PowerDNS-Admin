@@ -278,7 +278,7 @@ def fixrev():
 
     recorddata = json.loads(request.data)
     show("fixrev print of recorddata is :\n%s" % (recorddata), level=6)
-    if 'hostname' in recorddata and 'revname' in recorddata:
+    if retval == 'begin' and 'hostname' in recorddata and 'revname' in recorddata:
         show("fixrev pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
         hostname = recorddata['hostname'] + '.'
         revname = recorddata['revname']
@@ -290,6 +290,16 @@ def fixrev():
 
         domain_reverse_name = dom_.get_reverse_domain_name(revname)
         show("fixrev name is :%s revname is %s domain_reverse_name %s" % (hostname, revname, domain_reverse_name), level=6)
+
+        mdl = db.session.query(Domain)\
+                .filter(Domain.name == domain_reverse_name)\
+                .first()
+        if not mdl:
+            show("fixrev domain_reverse_name %s DOES NOT EXIST" % (domain_reverse_name), level=6)
+            dom_ = Domain()
+            domain = 'pop'
+            dom_.create_reverse_domain(domain, domain_reverse_name)
+            # return jsonify(retval='No Domain %s' % (domain_reverse_name))
 
         rec = Record(name=revnamewdot, type='PTR', status=False, ttl=86400, data=hostname)
         rec.update(domain_reverse_name, hostname, isreverse=True)
