@@ -589,11 +589,6 @@ class Domain(db.Model):
         domain_name = domain_name + '.'
         domain_ns = [ns + '.' for ns in domain_ns]
 
-        soarecord = {"content": "dns001.den01.pop hostmaster.spotx.tv 2018031314 3600 900 2592000 3600",
-                     "disabled": False,
-                     "name": domain_name,
-                     "ttl": 86400,
-                     "type": "SOA", }
         post_data = {"name": domain_name,
                      "kind": domain_type,
                      "masters": domain_master_ips,
@@ -602,13 +597,8 @@ class Domain(db.Model):
         if soa_edit_api != 'OFF':
             post_data["soa_edit_api"] = soa_edit_api
 
-        from pprint import pprint
-        #pprint(soa_edit_api)
-        pprint(post_data)
-        #pprint(asdf)
 
-        #try:
-        if True:
+        try:
             jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'),
                                      headers=headers, method='POST', data=post_data)
             if 'error' in jdata.keys():
@@ -617,10 +607,10 @@ class Domain(db.Model):
             else:
                 LOGGING.info('Added domain %s successfully', domain_name)
                 return {'status': 'ok', 'msg': 'Added domain successfully'}
-        #except Exception as err:
-        #    LOGGING.error('Cannot add domain %s', domain_name)
-        #    traceback.format_exc()
-        #    LOGGING.debug(str(err))
+        except Exception as err:
+            LOGGING.error('Cannot add domain %s', domain_name)
+            traceback.format_exc()
+            LOGGING.debug(str(err))
             return {'status': 'error', 'msg': 'Cannot add this domain.'}
 
     def create_reverse_domain(self, domain_name, domain_reverse_name):
