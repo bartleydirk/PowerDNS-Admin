@@ -579,27 +579,32 @@ class Domain(db.Model):
         Add a domain to power dns
         """
         if not domain_ns:
-            domain_ns = []
+            domain_ns = ['dns001.den01.pop', 'dns002.den01.pop', 'dns001.iad02.pop', 'dns002.iad02.pop',
+                         'dns001.sin01.pop', 'dns002.sin01.pop', 'dns001.ams01.pop', 'dns002.ams01.pop']
         if not domain_master_ips:
             domain_master_ips = []
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
 
-        if NEW_SCHEMA:
-            domain_name = domain_name + '.'
-            domain_ns = [ns + '.' for ns in domain_ns]
+        domain_name = domain_name + '.'
+        domain_ns = [ns + '.' for ns in domain_ns]
 
-        if soa_edit_api == 'OFF':
-            post_data = {"name": domain_name,
-                         "kind": domain_type,
-                         "masters": domain_master_ips,
-                         "nameservers": domain_ns, }
-        else:
-            post_data = {"name": domain_name,
-                         "kind": domain_type,
-                         "masters": domain_master_ips,
-                         "nameservers": domain_ns,
-                         "soa_edit_api": soa_edit_api}
+        soarecord = {"content": "dns001.den01.pop hostmaster.spotx.tv 2018031314 3600 900 2592000 3600",
+                     "disabled": False,
+                     "name": domain_name,
+                     "ttl": 86400,
+                     "type": "SOA", }
+        post_data = {"name": domain_name,
+                     "kind": domain_type,
+                     "masters": domain_master_ips,
+                     "nameservers": domain_ns,}
+
+        if soa_edit_api != 'OFF':
+            post_data["soa_edit_api"] = soa_edit_api
+
+        from pprint import pprint
+        #pprint(soa_edit_api)
+        pprint(post_data)
         #pprint(asdf)
 
         #try:
@@ -632,7 +637,7 @@ class Domain(db.Model):
         self.name = domain_name
         domain_id = self.get_id_by_name(domain_reverse_name)
         if domain_id is None and (system_auto_ptr or domain_auto_ptr):
-            result = self.add(domain_reverse_name, 'Master', 'INCEPTION-INCREMENT', '', '')
+            result = self.add(domain_reverse_name, 'Native', 'INCEPTION-INCREMENT')
             self.update()
             if result['status'] == 'ok':
                 history = History(msg='Add reverse lookup domain %s' % domain_reverse_name,
