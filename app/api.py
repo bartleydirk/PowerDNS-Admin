@@ -16,6 +16,7 @@ from app.models import Domain
 # from app.models import User, Domain, History, Setting, DomainSetting
 # pylint: disable=E0401,E0001
 from .base import Record
+import dns.reversename
 
 DBGREQUEST = False
 DBGDATA = False
@@ -228,8 +229,23 @@ def addhost():
         if 'rectype' in recorddata:
             rectype = recorddata['rectype']
 
+        show("name be is %s" % name, level=6)
+        show("content be is %s" % (recorddata['content']), level=6)
         rec = Record(name=name, type=rectype, status=False, ttl=ttl, data=recorddata['content'])
         rec.add(domainname, username)
+
+        if rectype == 'A':
+            show("name is %s" % name, level=6)
+            show("content is %s" % (recorddata['content']), level=6)
+            #r_name = dns.reversename.to_address(recorddata['content'])
+            reverse_host_address = dns.reversename.from_address(recorddata['content']).to_text()
+            show("r_name is %s" % (reverse_host_address), level=6)
+            if True:
+                revrec = Record(name=reverse_host_address, type='PTR', status=False, ttl=86400, data=name)
+                dom_ = Domain()
+                domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
+                revrec.update(domain_reverse_name, name, isreverse=True)
+
 
     return jsonify(retval=retval)
 
