@@ -1,6 +1,4 @@
-"""
-Base Classes
-"""
+"""Base Classes."""
 
 import itertools
 # pylint: disable=E0401
@@ -20,19 +18,24 @@ from .models import History, Domain, DomainSetting, Setting, Rrset
 
 
 class Anonymous(AnonymousUserMixin):
-    """Calss for Anonomous User"""
+    """Class for Anonomous User."""
+
+    # pylint: disable=R0903
     def __init__(self):
+        """Set the username to Anonymous, it's a flask thing."""
         self.username = 'Anonymous'
 
 
 class Record(object):
     """
-    This is not a model, it's just an object
-    which be assigned data from PowerDNS API
+    Record object, Not a model.
+
+    Object used to communicate with PowerDNS API
     """
 
     # pylint: disable=C0103,R0913,W0622
     def __init__(self, name=None, type=None, status=False, ttl=None, data=None, rrsetid=None):
+        """Initialize values for class Record."""
         self.name = name
         self.type = type
         self.status = status
@@ -47,9 +50,7 @@ class Record(object):
         self.fnl_recs = []
 
     def get_record_data(self, domain):
-        """
-        Query domain's DNS records via API
-        """
+        """Query domain's DNS records via API."""
         if self.rrsetid:
             rrsetid = int(self.rrsetid)
             rrset_record = db.session.query(Rrset)\
@@ -87,9 +88,7 @@ class Record(object):
         return jdata
 
     def add(self, domain, created_by=None):
-        """
-        Add a record to domains
-        """
+        """Add a record to domains."""
         # validate record first
         rec = self.get_record_data(domain)
         # pylint: disable=W0110
@@ -152,8 +151,8 @@ class Record(object):
     #        return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def compare(self, domain_name, new_records):
-        """
-        Compare new records with current powerdns record data
+        """Compare new records with current powerdns record data.
+
         Input is a list of hashes (records)
         """
         # get list of current records we have in powerdns
@@ -177,9 +176,7 @@ class Record(object):
         return deleted_records, new_records
 
     def apply(self, domain, post_records):
-        """
-        Apply record changes to domain
-        """
+        """Apply record changes to domain."""
         # pylint: disable=R0912,R0915
         records = []
         for r in post_records:
@@ -296,7 +293,6 @@ class Record(object):
                                                    "type": key[1],
                                                    "priority": 10, } for item in group]})
         self.final_records_limit()
-        #postdata_for_changes = {"rrsets": self.fnl_recs}
         postdata_for_changes = {"rrsets": self.net_final}
 
         try:
@@ -314,7 +310,7 @@ class Record(object):
                 # should this get postdata_for_changes ??? instead of the deprecated new_records, deleted_records
                 # postdata_for_changes is final_records_limit
                 if not re.search('in-addr.arpa', domain):
-                    self.auto_ptr(domain, new_records, deleted_records)
+                    self.auto_ptr(domain)
 
                 LOGGING.debug("update dyndns data: %s", postdata_for_changes)
                 LOGGING.debug("update dyndns url: %s", url)
@@ -328,7 +324,7 @@ class Record(object):
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def history_log(self, domain_name):
-        """Write history Record to database"""
+        """Write history Record to database."""
         for key in self.unique_key:
             testme = self.unique_key[key]
             if not testme['same']:
@@ -362,7 +358,7 @@ class Record(object):
         db.session.commit()
 
     def final_records_limit(self):
-        """limit the number of replace changes, for LOGGING"""
+        """limit the number of replace changes, for LOGGING."""
         # pylint: disable=R0912,R0915
         # a key to unique identify all records wether added, deleted or modified
         self.unique_key = {}
@@ -429,7 +425,7 @@ class Record(object):
                     same = False
                     ttlcnt += 1
                 # test for disabled being the same
-                if len(final['records']) > 0 and current['disabled'] != final['records'][0]['disabled']:
+                if final['records'] and current['disabled'] != final['records'][0]['disabled']:
                     same = False
                     discnt += 1
                 if same:
@@ -446,10 +442,8 @@ class Record(object):
                     self.net_final.append(self.fnl_recs[testme['final_records']])
         return
 
-    def auto_ptr(self, domain, new_records, deleted_records):
-        """
-        Add auto-ptr records
-        """
+    def auto_ptr(self, domain):
+        """Add auto-ptr records."""
         retval = None
 
         domain_obj = Domain.query.filter(Domain.name == domain).first()
@@ -460,23 +454,21 @@ class Record(object):
 
         system_auto_ptr = Setting.query.filter(Setting.name == 'auto_ptr').first()
         system_auto_ptr = strtobool(system_auto_ptr.value)
-        
+
         if system_auto_ptr or domain_auto_ptr:
             dom_ = Domain()
             for key in self.unique_key:
                 testme = self.unique_key[key]
                 if testme['same'] is False:
-                    delrec = None
-                    if 'delete_records' in testme:
-                        delrec = self.records_delete[testme['delete_records']]
+                    # if 'delete_records' in testme:
+                    #    deleted_record = self.records_delete[testme['delete_records']]
                     current = None
                     if 'current_records' in testme:
                         current = self.current_records[testme['current_records']]
-                    final = None
-                    if 'final_records' in testme:
-                        final = self.fnl_recs[testme['final_records']]
+                    # if 'final_records' in testme:
+                    #    final = self.fnl_recs[testme['final_records']]
                     if testme['change_type'] == 'DELETE':
-                        r_name = current['name'] + '.'
+                        # r_name = current['name'] + '.'
                         r_content = current['content']
                         reverse_host_address = dns.reversename.from_address(r_content).to_text()
                         domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
@@ -484,22 +476,17 @@ class Record(object):
                         self.type = 'PTR'
                         self.data = r_content
                         self.delete(domain_reverse_name)
-                        pprint(qpwriweoriuo)
-                        pass
                     else:
-                        r_name = current['name'] + '.'
+                        # r_name = current['name'] + '.'
                         r_content = current['content']
                         reverse_host_address = dns.reversename.from_address(r_content).to_text()
                         domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
                         dom_.create_reverse_domain(domain, domain_reverse_name)
-                        pass
 
         return retval
 
-    def delete(self, domain, username=None):
-        """
-        Delete a record from domain
-        """
+    def delete(self, domain):  # , username=None):
+        """Delete a record from domain."""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         data = {"rrsets": [{"name": self.name.rstrip('.') + '.',
@@ -516,14 +503,13 @@ class Record(object):
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
     def is_allowed(self):
-        """
-        Check if record is allowed to edit/removed
-        """
+        """Check if record is allowed to edit/removed."""
         return self.type in app.config['RECORDS_ALLOW_EDIT']
 
     def exists(self, domain):
-        """
-        Check if record is present within domain records, and if it's present set self to found record
+        """Check if record is present within domain records.
+
+        and if it's present set self to found record
         """
         jdata = self.get_record_data(domain)
         jrecords = jdata['records']
@@ -539,10 +525,8 @@ class Record(object):
                 return True
         return False
 
-    def update(self, domain, content, isreverse=False):
-        """
-        Update single record
-        """
+    def update(self, domain, content):
+        """Update single record."""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
 
@@ -576,17 +560,18 @@ class Record(object):
 
 
 class Server(object):
-    """
-    This is not a model, it's just an object
-    which be assigned data from PowerDNS API
+    """This is not a model, it's just an object.
+
+    Assigned data from PowerDNS API
     """
 
     def __init__(self, server_id=None, server_config=None):
+        """Initialize Values."""
         self.server_id = server_id
         self.server_config = server_config
 
     def get_config(self):
-        """Get server config"""
+        """Get server config."""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
 
@@ -600,9 +585,7 @@ class Server(object):
             return []
 
     def get_statistic(self):
-        """
-        Get server statistics
-        """
+        """Get server statistics."""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
 
