@@ -494,38 +494,6 @@ class Record(object):
                         dom_.create_reverse_domain(domain, domain_reverse_name)
                         pass
 
-            #try:
-            #if True:
-            #    pprint(afsd)
-            #    for rec in new_records:
-            #        if rec['type'] in ['A', 'AAAA']:
-            #            r_name = rec['name'] + '.'
-            #            r_content = rec['content']
-            #            reverse_host_address = dns.reversename.from_address(r_content).to_text()
-            #            domain_reverse_name = d.get_reverse_domain_name(reverse_host_address)
-            #            dom_.create_reverse_domain(domain, domain_reverse_name)
-            #            self.name = dns.reversename.from_address(r_content).to_text().rstrip('.')
-            #            self.type = 'PTR'
-            #            self.status = rec['disabled']
-            #            self.ttl = rec['ttl']
-            #            self.data = r_name
-            #            self.add(domain_reverse_name)
-            #    for rec in deleted_records:
-            #        if rec['type'] in ['A', 'AAAA']:
-            #            r_name = rec['name'] + '.'
-            #            r_content = rec['content']
-            #            reverse_host_address = dns.reversename.from_address(r_content).to_text()
-            #            domain_reverse_name = d.get_reverse_domain_name(reverse_host_address)
-            #            self.name = reverse_host_address
-            #            self.type = 'PTR'
-            #            self.data = r_content
-            #            self.delete(domain_reverse_name)
-            #            pprint(qpwriweoriuo)
-            #    retval = {'status': 'ok', 'msg': 'Auto-PTR record was updated successfully'}
-            #except Exception as e:
-            #    LOGGING.error("Cannot update auto-ptr record changes to domain %s. DETAIL: %s", str(e), domain)
-            #    retval = {'status': 'error',
-            #              'msg': 'Auto-PTR creation failed. There was something wrong, please contact administrator.'}
         return retval
 
     def delete(self, domain, username=None):
