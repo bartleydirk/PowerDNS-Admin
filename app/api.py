@@ -48,7 +48,7 @@ def get_domain_fromname(name):
                 test = "%s" % (item)
             else:
                 test = "%s.%s" % (item, test)
-            #show("get_domain_fromname of testing is :%s" % (test), level=6)
+            # show("get_domain_fromname of testing is :%s" % (test), level=6)
             mdl = db.session.query(Domain)\
                     .filter(Domain.name == test)\
                     .first()
@@ -207,8 +207,9 @@ def addhost():
     show("Begin api route #########################################\n\n")
     retval = 'begin'
     if not token_verify():
-        retval = jsonify(retval='No Token')
+        return jsonify(retval='No Token')
     username = getheadervalue(request.headers, 'X-API-User')
+    addresult = {}
 
     recorddata = json.loads(request.data)
     show("print of recorddata is :\n%s" % (recorddata), level=6)
@@ -217,7 +218,7 @@ def addhost():
         name = recorddata['name']
         show("name is :%s" % (name), level=6)
         domainname = get_domain_fromname(name)
-        #show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
+        # show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
         # , type_='A', ttl=86400, disabled=False
         # pdnsdata = build_rrset(name=recorddata['name'], ipaddr=recorddata['ipaddr'])
         # show("print of pdnsdata is :\n%s" % (pformat(pdnsdata, indent=4)), level=6)
@@ -232,22 +233,25 @@ def addhost():
         show("name be is %s" % name, level=6)
         show("content be is %s" % (recorddata['content']), level=6)
         rec = Record(name=name, type=rectype, status=False, ttl=ttl, data=recorddata['content'])
-        rec.add(domainname, username)
+        addresult = rec.add(domainname, username)
 
         if rectype == 'A':
             show("name is %s" % name, level=6)
             show("content is %s" % (recorddata['content']), level=6)
-            #r_name = dns.reversename.to_address(recorddata['content'])
+            # r_name = dns.reversename.to_address(recorddata['content'])
             reverse_host_address = dns.reversename.from_address(recorddata['content']).to_text()
             show("r_name is %s" % (reverse_host_address), level=6)
             if True:
                 revrec = Record(name=reverse_host_address, type='PTR', status=False, ttl=86400, data=name)
                 dom_ = Domain()
                 domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
-                revrec.update(domain_reverse_name, name, isreverse=True)
+                revresult = revrec.update(domain_reverse_name, name, isreverse=True)
+                if 'status' in revresult:
+                    addresult['revstatus'] = revresult['status']
+                if 'msg' in revresult:
+                    addresult['revmsg'] = revresult['msg']
 
-
-    return jsonify(retval=retval)
+    return jsonify(retval=retval, **addresult)
 
 
 @app.route('/delrec', methods=['GET', 'POST', 'PATCH'])
@@ -255,6 +259,7 @@ def delrec():
     """Let us test the api from a brower so I can debug the damn thing."""
     # first authenticate
     show("Begin api route #########################################\n\n")
+    deleteresult = {}
     retval = 'begin'
     if not token_verify():
         retval = jsonify(retval='No Token')
@@ -276,9 +281,9 @@ def delrec():
             rectype = recorddata['rectype']
 
         rec = Record(name=name, type=rectype, status=False)
-        rec.delete(domainname, username=username)
+        deleteresult = rec.delete(domainname, username=username)
 
-    return jsonify(retval=retval)
+    return jsonify(retval=retval, **deleteresult)
 
 
 @app.route('/fixrev', methods=['GET', 'POST', 'PATCH'])
@@ -287,6 +292,7 @@ def fixrev():
     # first authenticate
     show("Begin api route #########################################\n\n")
     retval = 'begin'
+    updateresult = {}
     if not token_verify():
         retval = jsonify(retval='No Token')
     username = getheadervalue(request.headers, 'X-API-User')
@@ -299,13 +305,10 @@ def fixrev():
         hostname = recorddata['hostname'] + '.'
         revname = recorddata['revname']
         revnamewdot = recorddata['revname'] + '.'
-        # name = revname
-        #namespl = revname.split('.')
-        #if namespl > 0:
-        #    name = namespl[0]
 
         domain_reverse_name = dom_.get_reverse_domain_name(revname)
-        show("fixrev name is :%s revname is %s domain_reverse_name %s" % (hostname, revname, domain_reverse_name), level=6)
+        show("fixrev name is :%s revname is %s domain_reverse_name %s" %
+             (hostname, revname, domain_reverse_name), level=6)
 
         mdl = db.session.query(Domain)\
                 .filter(Domain.name == domain_reverse_name)\
@@ -318,6 +321,6 @@ def fixrev():
             # return jsonify(retval='No Domain %s' % (domain_reverse_name))
 
         rec = Record(name=revnamewdot, type='PTR', status=False, ttl=86400, data=hostname)
-        rec.update(domain_reverse_name, hostname, isreverse=True)
+        updateresult = rec.update(domain_reverse_name, hostname, isreverse=True)
 
-    return jsonify(retval=retval)
+    return jsonify(retval=retval, **updateresult)
