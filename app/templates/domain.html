@@ -99,7 +99,7 @@
                                     </td>
                                     <!-- hidden column that we can sort on -->
                                     <td>1</td>
-                                    <td>{% if record.name in hdict %}<a href="{{ url_for('admin_history', domain=domain.name, name=record.name)}}">{{ hdict[record.name] }}</a>{% endif %}</td>
+                                    <td>{% if record.name in hdict %}<a href="{{ url_for('admin_history', domain=domain.name, name=record.name)}}" target="_blank">{{ hdict[record.name] }}</a>{% endif %}</td>
                                     <!-- hidden column that we can identify as changed <td>0</td> -->
                                 </tr>
                                 {% endfor %}

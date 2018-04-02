@@ -78,7 +78,7 @@ function saveRow(oTable, nRow) {
     oTable.cell(nRow,5).data(button_edit);
     oTable.cell(nRow,6).data(button_delete);
 
-    oTable.draw();
+    //oTable.draw();
 }
 
 function restoreRow(oTable, nRow) {
@@ -86,7 +86,11 @@ function restoreRow(oTable, nRow) {
     var aData = oTable.row(nRow).data();
     var jqTds = $('>td', nRow);
     oTable.row(nRow).data(aData);
-    oTable.draw();
+    page = oTable.page()
+    console.log('restoreRow page ' + page)
+    //oTable.row(nRow).draw();
+    //oTable.page(page);
+    //oTable.draw();
 }
 
 function editRow(oTable, nRow) {
