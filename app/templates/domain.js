@@ -15,7 +15,7 @@ var table = $("#tbl_records").DataTable({
     "autoWidth" : false,
     {% if default_record_table_size_setting in ['5','15','20'] %}
     "lengthMenu": [ [5, 15, 20, -1],
-                    [5, 15, 20, "All"]],
+                    [25, 50, 75, 100, "All"]],
     {% else %}
     "lengthMenu": [ [5, 15, 20, {{ default_record_table_size_setting }}, -1],
                     [5, 15, 20, {{ default_record_table_size_setting }}, "All"]],
