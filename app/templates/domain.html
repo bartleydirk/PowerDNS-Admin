@@ -58,20 +58,20 @@
                         </thead>
                         <tbody>
                                 {% for record in records %}
-                                <tr class="odd row_record" id="{{ domain.name }}" data-name="{{ (record.name,domain.name)|display_record_name }}">
-                                    <td>
+                                <tr class="odd" id="{{ domain.name }}" data-name="{{ (record.name,domain.name)|display_record_name }}">
+                                    <td class="row_td">
                                         {{ (record.name,domain.name)|display_record_name }}
                                     </td>
-                                    <td>
+                                    <td class="row_td">
                                         {{ record.type }}
                                     </td>
-                                    <td>
+                                    <td class="row_td">
                                          {{ record.status }}
                                     </td>
-                                    <td>
+                                    <td class="row_td">
                                          {{ record.ttl }}
                                     </td>
-                                    <td class="length-break">
+                                    <td class="length-break row_td">
                                          {{ record.data }}
                                     </td>
                                 {% if domain.type != 'Slave' %}

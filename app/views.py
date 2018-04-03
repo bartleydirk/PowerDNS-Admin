@@ -782,7 +782,7 @@ def admin_settings_toggle(setting):
 @admin_role_required
 def admin_settings_edit(setting):
     """View to Edit Settings"""
-    pdata = request.data
+    pdata = request.form.get('postdata', {})
     jdata = json.loads(pdata)
     new_value = jdata['value']
     result = Setting().set(setting, new_value)

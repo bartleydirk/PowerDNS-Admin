@@ -44,12 +44,10 @@ var table = $("#tbl_records").DataTable({
     ],
     "orderFixed": [[7, 'asc']]
 });
-//$( document ).ready( onload() );
 
     console.log('onload');
 
     // handle apply changes button
-    //$('#button_apply_changes').click(function(e) {
     $(document.body).on("click", "#button_apply_changes", function(e) {
         console.log('#button_apply_changes');
         var modal = $("#modal_apply_changes");
@@ -68,7 +66,6 @@ var table = $("#tbl_records").DataTable({
     });
 
     // handle add record button
-    //$('#button_add_record').click(function(e) {
     $(document.body).on("click", "#button_add_record", function(e) {
         console.log('#button_add_record');
         if (nNew || nEditing) {
@@ -102,7 +99,6 @@ var table = $("#tbl_records").DataTable({
 //function onbuttonchange() {
     console.log('onbuttonchange');
     // handle delete button
-    //$('.button_delete').unbind().click(function(e) {
     $(document.body).on("click", ".button_delete", function(e) {
         console.log('.button_delete');
         e.stopPropagation();
@@ -125,9 +121,8 @@ var table = $("#tbl_records").DataTable({
     });
 
     // handle edit button
-    //$('.button_edit,.row_record').unbind().click(function(e) {
-    $(document.body).on("click", ".button_edit,.row_record", function(e) {
-        console.log('.button_edit, .row_record');
+    $(document.body).on("click", ".button_edit,.row_td", function(e) {
+        console.log('.button_edit, .row_td');
          e.stopPropagation();
          if ($(this).is('tr')) {
             var nRow = $(this)[0]; 
@@ -158,7 +153,6 @@ var table = $("#tbl_records").DataTable({
     });
 
     // handle cancel button
-    //$('.button_cancel').unbind().click(function(e) {
     $(document.body).on("click", ".button_cancel", function(e) {
         console.log('.button_cancel');
         e.stopPropagation();
@@ -175,7 +169,6 @@ var table = $("#tbl_records").DataTable({
     });
 
     //handle save button
-    //$('.button_save').unbind().click(function(e) {
     $(document.body).on("click", ".button_save", function(e) {
         console.log('.button_save');
         e.stopPropagation();
