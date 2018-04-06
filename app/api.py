@@ -39,6 +39,7 @@ def show(message, level=5):
 
 
 def get_domain_fromname(name):
+    """I want the domain from the name, use a database query since we have it."""
     name_split = name.split('.')
     name_split.reverse()
     test = ''
@@ -234,6 +235,7 @@ def addhost():
         show("content be is %s" % (recorddata['content']), level=6)
         rec = Record(name=name, type=rectype, status=False, ttl=ttl, data=recorddata['content'])
         addresult = rec.add(domainname, username)
+        CREATEREVERSE = True
 
         if rectype == 'A':
             show("name is %s" % name, level=6)
@@ -241,7 +243,7 @@ def addhost():
             # r_name = dns.reversename.to_address(recorddata['content'])
             reverse_host_address = dns.reversename.from_address(recorddata['content']).to_text()
             show("r_name is %s" % (reverse_host_address), level=6)
-            if True:
+            if CREATEREVERSE:
                 revrec = Record(name=reverse_host_address, type='PTR', status=False, ttl=86400, data=name)
                 dom_ = Domain()
                 domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
@@ -281,7 +283,7 @@ def delrec():
             rectype = recorddata['rectype']
 
         rec = Record(name=name, type=rectype, status=False)
-        deleteresult = rec.delete(domainname, username=username)
+        deleteresult = rec.delete(domainname)  # , username=username
 
     return jsonify(retval=retval, **deleteresult)
 
