@@ -1,0 +1,57 @@
+[uwsgi]
+
+#uwsgi --uwsgi-socket /tmp/uwsgi.sock --chdir /home/dbartley/projects/PowerDNS-Admin --module PowerDNS-Admin --callable app
+
+#uwsgi --uwsgi-socket /tmp/uwsgi.sock --chdir /home/dbartley/projes/PowerDNS-Admin --module app --callable app
+
+#application's base folder
+
+#--force-cwd                            force the initial working directory to the specified value
+#--binsh                                override /bin/sh (used by exec hooks, it always fallback to /bin/sh)
+#--chdir                                chdir to specified directory before apps loading
+#--chdir2                               chdir to specified directory after apps loading
+base = /home/dbartley/projects/PowerDNS-Admin
+chdir = /home/dbartley/projects/PowerDNS-Admin
+#close-on-exec
+#close-on-exec2
+#--close-on-exec
+#--close-on-exec2
+enable-threads
+#-d|--daemonize                         daemonize uWSGI
+#--daemonize2                           daemonize uWSGI after app loading
+#daemonize2
+#
+#uid 1002
+#gid 100001
+# 350 is nginx group
+#gid 350
+
+
+#python module to import
+#app = PowerDNS-Admin  , Changed because the sub dir is goofily app, 
+app = app
+module = %(app)
+
+#home = %(base)/venv
+#pythonpath = %(base)
+
+#socket file's location
+#socket = /var/www/demoapp/%n.sock
+#socket = /tmp/uwsgi.sock
+socket = /var/run/PowerDNS-Admin/%n.sock
+
+processes = 4
+
+#permissions for the socket file
+chmod-socket    = 666
+
+#the variable that holds a flask application inside the module imported at line #6
+callable = app
+
+#location of log files
+logto = /var/log/uwsgi/%n.log
+
+# url_for, prepend with flask here??
+#manage-script-name = true
+#mount PowerDNS-Admin=flask
+pymodule-alias = flask
