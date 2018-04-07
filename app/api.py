@@ -23,7 +23,7 @@ DBGDATA = False
 DBGHDR = False
 SHOWLOG = True
 
-LOGFILE = '%s/afile.log' % os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+LOGFILE = '%s/server.log' % os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # show("log file is %s" % (LOGFILE), 10)
 
 
@@ -39,7 +39,6 @@ def show(message, level=5):
 
 
 def get_domain_fromname(name):
-    """I want the domain from the name, use a database query since we have it."""
     name_split = name.split('.')
     name_split.reverse()
     test = ''
@@ -126,6 +125,7 @@ def checkkeys():
     show('checkkeys server_keypair.uuid "%s"' % (server_keypair.uuid))
 
     # this will not generate new keys
+    show('about to create client_keypair object %s username %s' % (cnfgfile, username))
     client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
     show("checkkeys showing client_keypair.uuid %s" % (client_keypair.uuid))
     show(client_keypair)
@@ -181,14 +181,14 @@ def token_request():
     client_keypair = Keypair(cnfgfile=cnfgfile, username=username)
     show(server_keypair)
     password = server_keypair.decrypt(encryptedpassword)
-    show("token -> password = %s" % (password))
+    # show("token -> password = %s" % (password))
 
     user = db.session.query(User) \
              .filter(User.username == username) \
              .first()
     user.plain_text_password = password
     encryptedtoken = ''
-    if user.password and user.check_password(user.password):
+    if user.password and (user.check_passwd_local(user.password) or user.check_passwd_ldap(validate_thispass=password)):
         status = 'Password Success'
         # generate and save a token in the cfg file
         token_ = client_keypair.gentoken()
@@ -235,7 +235,6 @@ def addhost():
         show("content be is %s" % (recorddata['content']), level=6)
         rec = Record(name=name, type=rectype, status=False, ttl=ttl, data=recorddata['content'])
         addresult = rec.add(domainname, username)
-        CREATEREVERSE = True
 
         if rectype == 'A':
             show("name is %s" % name, level=6)
@@ -243,7 +242,7 @@ def addhost():
             # r_name = dns.reversename.to_address(recorddata['content'])
             reverse_host_address = dns.reversename.from_address(recorddata['content']).to_text()
             show("r_name is %s" % (reverse_host_address), level=6)
-            if CREATEREVERSE:
+            if True:
                 revrec = Record(name=reverse_host_address, type='PTR', status=False, ttl=86400, data=name)
                 dom_ = Domain()
                 domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
@@ -283,7 +282,7 @@ def delrec():
             rectype = recorddata['rectype']
 
         rec = Record(name=name, type=rectype, status=False)
-        deleteresult = rec.delete(domainname)  # , username=username
+        deleteresult = rec.delete(domainname, username=username)
 
     return jsonify(retval=retval, **deleteresult)
 

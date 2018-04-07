@@ -105,7 +105,7 @@ class User(db.Model):
         pw = plain_text_password if plain_text_password else self.plain_text_password
         return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt())
 
-    def check_password(self, hashed_password):
+    def check_passwd_local(self, hashed_password):
         """Validate password"""
         # Check hased password. Useing bcrypt, the salt is saved into the hash itself
         return bcrypt.checkpw(self.plain_text_password.encode('utf-8'), hashed_password.encode('utf-8'))
@@ -161,7 +161,7 @@ class User(db.Model):
             user_info = User.query.filter(User.username == self.username).first()
 
             if user_info:
-                if user_info.password and self.check_password(user_info.password):
+                if user_info.password and self.check_passwd_local(user_info.password):
                     LOGGING.info('User "%s" logged in successfully', self.username)
                     return True
                 LOGGING.error('User "%s" input a wrong password', self.username)
@@ -171,61 +171,66 @@ class User(db.Model):
             return False
 
         if method == 'LDAP':
-            if not LDAP_TYPE:
-                LOGGING.error('LDAP authentication is disabled')
-                return False
-
-            searchFilter = "(&(objectcategory=person)(samaccountname=%s))" % self.username
-            if LDAP_TYPE == 'ldap':
-                searchFilter = "(&(%s=%s)%s)" % (LDAP_USERNAMEFIELD, self.username, LDAP_FILTER)
-                LOGGING.info('Ldap searchFilter "%s"', searchFilter)
-
-            result = self.ldap_search(searchFilter, LDAP_SEARCH_BASE)
-            if not result:
-                LOGGING.warning('User "%s" does not exist', self.username)
-                return False
-
-            ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
-            ldp = ldap.initialize(LDAP_URI)
-            ldp.set_option(ldap.OPT_REFERRALS, 0)
-            ldp.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
-            ldp.set_option(ldap.OPT_X_TLS, ldap. OPT_X_TLS_DEMAND)
-            ldp.set_option(ldap.OPT_X_TLS_DEMAND, True)
-            ldp.set_option(ldap.OPT_DEBUG_LEVEL, 255)
-            ldp.protocol_version = ldap.VERSION3
-
-            try:
-                ldap_username = result[0][0][0]
-                ldp.simple_bind_s(ldap_username, self.password)
-                LOGGING.info('User "%s" logged in successfully', self.username)
-            except Exception:
-                LOGGING.error('User "%s" input a wrong password', self.username)
-                return False
-
-            # create user if not exist in the db
-            if not User.query.filter(User.username == self.username).first():
-                try:
-                    # try to get user's firstname & lastname from LDAP
-                    # this might be changed in the future
-                    self.firstname = result[0][0][1]['givenName'][0]
-                    self.lastname = result[0][0][1]['sn'][0]
-                    self.email = result[0][0][1]['mail'][0]
-                except Exception:
-                    self.firstname = self.username
-                    self.lastname = ''
-
-                # first register user will be in Administrator role
-                self.role_id = Role.query.filter_by(name='User').first().id
-                if User.query.count() == 0:
-                    self.role_id = Role.query.filter_by(name='Administrator').first().id
-
-                self.create_user()
-                LOGGING.info('Created user "%s" in the DB', self.username)
-
-            return True
+            return check_passwd_ldap()
 
         LOGGING.error('Unsupported authentication method')
         return False
+
+    def check_passwd_ldap(self, validate_thispass=None):
+        if not LDAP_TYPE:
+            LOGGING.error('LDAP authentication is disabled')
+            return False
+
+        searchFilter = "(&(objectcategory=person)(samaccountname=%s))" % self.username
+        if LDAP_TYPE == 'ldap':
+            searchFilter = "(&(%s=%s)%s)" % (LDAP_USERNAMEFIELD, self.username, LDAP_FILTER)
+            LOGGING.info('Ldap searchFilter "%s"', searchFilter)
+
+        result = self.ldap_search(searchFilter, LDAP_SEARCH_BASE)
+        if not result:
+            LOGGING.warning('User "%s" does not exist', self.username)
+            return False
+
+        ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+        ldp = ldap.initialize(LDAP_URI)
+        ldp.set_option(ldap.OPT_REFERRALS, 0)
+        ldp.set_option(ldap.OPT_PROTOCOL_VERSION, 3)
+        ldp.set_option(ldap.OPT_X_TLS, ldap. OPT_X_TLS_DEMAND)
+        ldp.set_option(ldap.OPT_X_TLS_DEMAND, True)
+        ldp.set_option(ldap.OPT_DEBUG_LEVEL, 255)
+        ldp.protocol_version = ldap.VERSION3
+        if not validate_thispass:
+            validate_thispass = self.password
+
+        try:
+            ldap_username = result[0][0][0]
+            ldp.simple_bind_s(ldap_username, validate_thispass)
+            LOGGING.info('User "%s" logged in successfully', self.username)
+        except Exception:
+            LOGGING.error('User "%s" input a wrong password', self.username)
+            return False
+
+        # create user if not exist in the db
+        if not User.query.filter(User.username == self.username).first():
+            try:
+                # try to get user's firstname & lastname from LDAP
+                # this might be changed in the future
+                self.firstname = result[0][0][1]['givenName'][0]
+                self.lastname = result[0][0][1]['sn'][0]
+                self.email = result[0][0][1]['mail'][0]
+            except Exception:
+                self.firstname = self.username
+                self.lastname = ''
+
+            # first register user will be in Administrator role
+            self.role_id = Role.query.filter_by(name='User').first().id
+            if User.query.count() == 0:
+                self.role_id = Role.query.filter_by(name='Administrator').first().id
+
+            self.create_user()
+            LOGGING.info('Created user "%s" in the DB', self.username)
+
+        return True
 
     def create_user(self):
         """
