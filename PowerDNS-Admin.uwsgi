@@ -39,6 +39,7 @@ module = %(app)
 #socket = /var/www/demoapp/%n.sock
 #socket = /tmp/uwsgi.sock
 socket = /var/run/PowerDNS-Admin/%n.sock
+#socket = 127.0.0.1:8080
 
 processes = 4
 
