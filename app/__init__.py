@@ -1,7 +1,9 @@
 """
-Application for managing Power Dns via API protocol
-"""
+Application for managing Power Dns via API protocol.
 
+Flask application built to use Sqlalchemy internally and the pdns api
+to make changes to pdns
+"""
 import os
 from distutils.version import StrictVersion
 
@@ -45,6 +47,7 @@ PDNS_VERSION = app.config['PDNS_VERSION']
 
 NEW_SCHEMA = bool(StrictVersion(PDNS_VERSION) >= StrictVersion('4.0.0'))
 
+
 from app.lib import utils
 from app.lib.log import logger
 LOGGING = logger('MODEL', app.config['LOG_LEVEL'], app.config['LOG_FILE']).config()
@@ -52,12 +55,14 @@ API_EXTENDED_URL = utils.pdns_api_extended_uri(PDNS_VERSION)
 
 
 class PdnsParser(RawConfigParser):
-    """
-    A class to inherit from RawConfigParser and have safe methods to get values
+    """A class to inherit from RawConfigParser.
+
+    Created to have safe methods to get values
     So that the config file can not have the value and there will be a default
     """
+
     def safe_get(self, section, option, default=None):
-        """ Safe Get Method """
+        """Safe Get Method."""
         retval = None
         if self.has_option(section, option):
             retval = self.get(section, option)
@@ -66,7 +71,7 @@ class PdnsParser(RawConfigParser):
         return retval
 
     def safe_getboolean(self, section, option, default=False):
-        """ Safe Get a boolean value Method """
+        """Safe Get a boolean value Method."""
         retval = None
         if self.has_option(section, option):
             retval = self.getboolean(section, option)
@@ -76,7 +81,7 @@ class PdnsParser(RawConfigParser):
 
 
 def get_version(infile):
-    """ We wanna return the value in the constant dictionary """
+    """We wanna return the value in the constant dictionary."""
     # exepth = os.path.dirname(os.path.realpath(__file__))
     pth = os.path.join(os.path.dirname(__file__), '..')
     cnfgfle = '%s/versions.cfg' % os.path.abspath(pth)
@@ -87,9 +92,9 @@ def get_version(infile):
 
 @app.context_processor
 def utility_processor():
-    """Method for easing browser loading of changed css and js files"""
+    """Method for easing browser loading of changed css and js files."""
     def url_for_static(file_name):
-        """ Returns the url for a static file and appends a version parameter if one exists """
+        """Method to return the url for a static file and appends a version parameter if one exists."""
         basename = os.path.basename(file_name)
         version = get_version(basename)
         if version:
@@ -99,7 +104,7 @@ def utility_processor():
 
 
 def enable_github_oauth(GITHUB_ENABLE):
-    """Enable Github Authorization"""
+    """Enable Github Authorization."""
     # pylint: disable=W0612
     if not GITHUB_ENABLE:
         return None, None
@@ -119,7 +124,7 @@ def enable_github_oauth(GITHUB_ENABLE):
 
     @app.route('/user/authorized')
     def authorized():
-        """Is the user autorized, redirect if not"""
+        """Test if the user is autorized, redirect if not."""
         session['github_oauthredir'] = url_for('.authorized', _external=True)
         resp = github_.authorized_response()
         if resp is None:
@@ -132,7 +137,7 @@ def enable_github_oauth(GITHUB_ENABLE):
 
     @github.tokengetter
     def get_github_oauth_token():
-        """Helper to get token"""
+        """Helper to get token."""
         return session.get('github_token')
 
     return oauth_, github_
