@@ -1,6 +1,4 @@
-"""
-module to contain sqlalchemy models
-"""
+"""module to contain sqlalchemy models."""
 
 import os
 import base64
@@ -20,13 +18,14 @@ from sqlalchemy.dialects.mysql import JSON
 from app import db
 from app.lib import utils
 from app import PDNS_STATS_URL, LDAP_URI, LDAP_USERNAME, LDAP_PASSWORD, LDAP_TYPE, LDAP_USERNAMEFIELD, LOGGING, \
-    LDAP_FILTER, LDAP_SEARCH_BASE, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA
+    LDAP_FILTER, LDAP_SEARCH_BASE, PDNS_API_KEY, API_EXTENDED_URL  # , NEW_SCHEMA
 
 
 # pylint: disable=W0703,R1705
 
 class User(db.Model):
-    """sqlalchmy model for a user"""
+    """sqlalchmy model for a user."""
+
     # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), index=True, unique=True)
@@ -41,6 +40,7 @@ class User(db.Model):
     # pylint: disable=R0913,W0622
     def __init__(self, id=None, username=None, password=None, plain_text_password=None, firstname=None, lastname=None,
                  role_id=None, email=None, avatar=None, otp_secret=None, reload_info=True):
+        """Initialize class properties."""
         self.id = id
         self.username = username
         self.password = password
@@ -66,63 +66,64 @@ class User(db.Model):
 
     @classmethod
     def is_authenticated(cls):
-        """Is the user authenticated"""
+        """Check if the user is authenticated."""
         return True
 
     @classmethod
     def is_active(cls):
-        """Is the user active"""
+        """Check if the user is active."""
         return True
 
     @classmethod
     def is_anonymous(cls):
-        """Is the user anonymous"""
+        """Check if the user is anonymous."""
         return False
 
     def get_id(self):
-        """Get the identifier helper function"""
+        """Get the identifier helper function."""
         try:
             return unicode(self.id)  # python 2
         except NameError:
             return str(self.id)  # python 3
 
     def __repr__(self):
+        """Represent."""
         return '<User %r>' % (self.username)
 
     def get_totp_uri(self):
-        """Auth uri"""
+        """Auth uri."""
         return 'otpauth://totp/PowerDNS-Admin:%s?secret=%s&issuer=PowerDNS-Admin' % (self.username, self.otp_secret)
 
     def verify_totp(self, token):
-        """Veiry Token"""
+        """Veiry Token."""
         totp = pyotp.TOTP(self.otp_secret)
         return totp.verify(int(token))
 
     def get_hashed_password(self, plain_text_password=None):
-        """Hashed password get"""
+        """Hashed password get."""
         # Hash a password for the first time
         #   (Using bcrypt, the salt is saved into the hash itself)
         pw = plain_text_password if plain_text_password else self.plain_text_password
         return bcrypt.hashpw(pw.encode('utf-8'), bcrypt.gensalt())
 
     def check_passwd_local(self, hashed_password):
-        """Validate password"""
+        """Validate password."""
         # Check hased password. Useing bcrypt, the salt is saved into the hash itself
         return bcrypt.checkpw(self.plain_text_password.encode('utf-8'), hashed_password.encode('utf-8'))
 
     def get_user_info_by_id(self):
-        """Retrieve a user by id"""
+        """Retrieve a user by id."""
         user_info = User.query.get(int(self.id))
         return user_info
 
     def get_user_info_by_username(self):
-        """Retrieve a user by name"""
+        """Retrieve a user by name."""
         user_info = User.query.filter(User.username == self.username).first()
         return user_info
 
     @classmethod
     def ldap_search(cls, searchFilter, baseDN):
-        """Search ldap"""
+        """Search ldap."""
         searchScope = ldap.SCOPE_SUBTREE
         retrieveAttributes = None
 
@@ -154,9 +155,7 @@ class User(db.Model):
 
     # pylint: disable=R0911
     def is_validate(self, method):
-        """
-        Validate user credential
-        """
+        """Validate user credential."""
         if method == 'LOCAL':
             user_info = User.query.filter(User.username == self.username).first()
 
@@ -171,12 +170,13 @@ class User(db.Model):
             return False
 
         if method == 'LDAP':
-            return check_passwd_ldap()
+            return self.check_passwd_ldap()
 
         LOGGING.error('Unsupported authentication method')
         return False
 
     def check_passwd_ldap(self, validate_thispass=None):
+        """Check to see if this user will authenticate with LDAP."""
         if not LDAP_TYPE:
             LOGGING.error('LDAP authentication is disabled')
             return False
@@ -233,21 +233,20 @@ class User(db.Model):
         return True
 
     def create_user(self):
-        """
+        """Create a user.
+
         If user logged in successfully via LDAP in the first time
         We will create a local user (in DB) in order to manage user
         profile such as name, roles,...
-        """
 
-        # Set an invalid password hash for non local users
+        Set an invalid password hash for non local users
+        """
         self.password = '*'
         db.session.add(self)
         db.session.commit()
 
     def create_local_user(self):
-        """
-        Create local user witch stores username / password in the DB
-        """
+        """Create local user witch stores username / password in the DB."""
         # check if username existed
         user = User.query.filter(User.username == self.username).first()
         if user:
@@ -269,10 +268,7 @@ class User(db.Model):
         return True
 
     def update_profile(self, enable_otp=None):
-        """
-        Update user profile
-        """
-
+        """Update user profile."""
         user = User.query.filter(User.username == self.username).first()
         if not user:
             return False
@@ -298,10 +294,7 @@ class User(db.Model):
             return False
 
     def get_domain(self):
-        """
-        Get domains which user has permission to
-        access
-        """
+        """Get domains which user has permission/access to."""
         user_domains = []
         query = db.session.query(User, DomainUser, Domain) \
                   .filter(User.id == self.id) \
@@ -312,10 +305,7 @@ class User(db.Model):
         return user_domains
 
     def delete(self):
-        """
-        Delete a user
-        """
-        # revoke all user privileges first
+        """Delete a user/revoke all user privileges first."""
         self.revoke_privilege()
 
         try:
@@ -328,9 +318,7 @@ class User(db.Model):
             return False
 
     def revoke_privilege(self):
-        """
-        Revoke all privielges from a user
-        """
+        """Revoke all privielges from a user."""
         user = User.query.filter(User.username == self.username).first()
 
         if user:
@@ -346,10 +334,10 @@ class User(db.Model):
         return False
 
     def set_admin(self, is_admin):
-        """
-        Set role for a user:
-            is_admin == True  => Administrator
-            is_admin == False => User
+        """Set role for a user.
+
+        is_admin == True  => Administrator
+        is_admin == False => User
         """
         user_role_name = 'Administrator' if is_admin else 'User'
         role = Role.query.filter(Role.name == user_role_name).first()
@@ -370,7 +358,8 @@ class User(db.Model):
 
 
 class Role(db.Model):
-    """Model for roles defining privileges"""
+    """Model for roles defining privileges."""
+
     # pylint: disable=C0103,R0903
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
@@ -379,16 +368,19 @@ class Role(db.Model):
 
     # pylint: disable=W0622
     def __init__(self, id=None, name=None, description=None):
+        """Initialize class properties."""
         self.id = id
         self.name = name
         self.description = description
 
     def __repr__(self):
+        """Represent."""
         return '<Role %r>' % (self.name)
 
 
 class DomainSetting(db.Model):
-    """Model for roles defining privileges"""
+    """Model for roles defining privileges."""
+
     # pylint: disable=C0103,R0903
     __tablename__ = 'domain_setting'
     id = db.Column(db.Integer, primary_key=True)
@@ -399,18 +391,21 @@ class DomainSetting(db.Model):
 
     # pylint: disable=W0622
     def __init__(self, id=None, setting=None, value=None):
+        """Initialize class properties."""
         self.id = id
         self.setting = setting
         self.value = value
 
     def __repr__(self):
+        """Represent."""
         return '<DomainSetting %r for %d>' % (self.setting, self.domain.name)
 
     def __eq__(self, other):
+        """Helper method."""
         return self.setting == other.setting
 
     def set(self, value):
-        """Set data to Database"""
+        """Set data to Database."""
         try:
             self.value = value
             db.session.commit()
@@ -423,7 +418,8 @@ class DomainSetting(db.Model):
 
 
 class Domain(db.Model):
-    """Model for Domain, database copy of what gets pulled from pdns via api"""
+    """Model for Domain, database copy of what gets pulled from pdns via api."""
+
     # pylint: disable=C0103,R0913
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), index=True, unique=True)
@@ -438,6 +434,7 @@ class Domain(db.Model):
     # pylint: disable=W0622
     def __init__(self, id=None, name=None, master=None, type='NATIVE', serial=None, notified_serial=None,
                  last_check=None, dnssec=None):
+        """Initialize class properties."""
         self.id = id
         self.name = name
         self.master = master
@@ -448,10 +445,11 @@ class Domain(db.Model):
         self.dnssec = dnssec
 
     def __repr__(self):
+        """Represent."""
         return '<Domain %r>' % (self.name)
 
     def add_setting(self, setting, value):
-        """Add a setting"""
+        """Add a setting."""
         try:
             self.settings.append(DomainSetting(setting=setting, value=value))
             db.session.commit()
@@ -462,8 +460,8 @@ class Domain(db.Model):
 
     @classmethod
     def get_domains(cls):
-        """
-        Get all domains which has in PowerDNS
+        """Get all domains which has in PowerDNS.
+
         jdata example:
             [
               {
@@ -488,9 +486,7 @@ class Domain(db.Model):
 
     @classmethod
     def get_id_by_name(cls, name):
-        """
-        Return domain id
-        """
+        """Return domain id."""
         try:
             domain = Domain.query.filter(Domain.name == name).first()
             return domain.id
@@ -499,9 +495,7 @@ class Domain(db.Model):
 
     @classmethod
     def update(cls):
-        """
-        Fetch zones (domains) from PowerDNS and update into DB
-        """
+        """Fetch zones (domains) from PowerDNS and update into DB."""
         # pylint: disable=R0915
         db_domain = Domain.query.all()
         list_db_domain = [d.name for d in db_domain]
@@ -580,9 +574,7 @@ class Domain(db.Model):
 
     @classmethod
     def add(cls, domain_name, domain_type, soa_edit_api, domain_ns=None, domain_master_ips=None):
-        """
-        Add a domain to power dns
-        """
+        """Add a domain to power dns."""
         if not domain_ns:
             domain_ns = ['dns001.den01.pop', 'dns002.den01.pop', 'dns001.iad02.pop', 'dns002.iad02.pop',
                          'dns001.sin01.pop', 'dns002.sin01.pop', 'dns001.ams01.pop', 'dns002.ams01.pop']
@@ -597,11 +589,10 @@ class Domain(db.Model):
         post_data = {"name": domain_name,
                      "kind": domain_type,
                      "masters": domain_master_ips,
-                     "nameservers": domain_ns,}
+                     "nameservers": domain_ns, }
 
         if soa_edit_api != 'OFF':
             post_data["soa_edit_api"] = soa_edit_api
-
 
         try:
             jdata = utils.fetch_json(urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones'),
@@ -619,10 +610,8 @@ class Domain(db.Model):
             return {'status': 'error', 'msg': 'Cannot add this domain.'}
 
     def create_reverse_domain(self, domain_name, domain_reverse_name):
-        """
-        Check the existing reverse lookup domain,
-        if not exists create a new one automatically
-        """
+        """Check the existing reverse lookup domain."""
+        # if not exists create a new one automatically
         domain_obj = Domain.query.filter(Domain.name == domain_name).first()
         domain_auto_ptr = DomainSetting.query.filter(DomainSetting.domain == domain_obj) \
                                              .filter(DomainSetting.setting == 'auto_ptr').first()
@@ -656,7 +645,7 @@ class Domain(db.Model):
         return {'status': 'ok', 'msg': 'Reverse lookup domain already exists'}
 
     def get_reverse_domain_name(self, reverse_host_address):
-        """Get Reverse Domain Name"""
+        """Get Reverse Domain Name."""
         c = 1
         if re.search('ip6.arpa', reverse_host_address):
             for i in range(1, 32, 1):
@@ -677,9 +666,7 @@ class Domain(db.Model):
 
     @classmethod
     def delete(cls, domain_name):
-        """
-        Delete a single domain name from powerdns
-        """
+        """Delete a single domain name from powerdns."""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
         try:
@@ -695,9 +682,7 @@ class Domain(db.Model):
             return {'status': 'error', 'msg': 'Cannot delete domain'}
 
     def get_user(self):
-        """
-        Get users (id) who have access to this domain name
-        """
+        """Get users (id) who have access to this domain name."""
         user_ids = []
         query = db.session.query(DomainUser, Domain) \
                   .filter(User.id == DomainUser.user_id) \
@@ -709,10 +694,7 @@ class Domain(db.Model):
         return user_ids
 
     def grant_privielges(self, new_user_list):
-        """
-        Reconfigure domain_user table
-        """
-
+        """Reconfigure domain_user table."""
         domain_id = self.get_id_by_name(self.name)
 
         domain_user_ids = self.get_user()
@@ -744,9 +726,7 @@ class Domain(db.Model):
 
     @classmethod
     def update_from_master(cls, domain_name):
-        """
-        Update records from Master DNS server
-        """
+        """Update records from Master DNS server."""
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if domain:
             headers = {}
@@ -763,9 +743,7 @@ class Domain(db.Model):
 
     @classmethod
     def get_domain_dnssec(cls, domain_name):
-        """
-        Get domain DNSSEC information
-        """
+        """Get domain DNSSEC information."""
         domain = Domain.query.filter(Domain.name == domain_name).first()
         if domain:
             headers = {}
@@ -785,7 +763,8 @@ class Domain(db.Model):
 
 
 class DomainUser(db.Model):
-    """Domain User Model"""
+    """Domain User Model."""
+
     # pylint: disable=C0103,R0903
     __tablename__ = 'domain_user'
     id = db.Column(db.Integer, primary_key=True)
@@ -793,15 +772,18 @@ class DomainUser(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def __init__(self, domain_id, user_id):
+        """Initialize class properties."""
         self.domain_id = domain_id
         self.user_id = user_id
 
     def __repr__(self):
+        """Represent object."""
         return '<Domain_User %r %r>' % (self.domain_id, self.user_id)
 
 
 class History(db.Model):
-    """SQLAlchemy model for the history database table"""
+    """SQLAlchemy model for the history database table."""
+
     # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
     msg = db.Column(db.String(256))
@@ -817,6 +799,7 @@ class History(db.Model):
     # pylint: disable=R0913,W0622
     def __init__(self, id=None, msg=None, detail=None, created_by=None, name=None, changetype=None, fromdata=None,
                  todata=None, domain=None):
+        """Initialize class properties."""
         domainid = None
         if not todata:
             todata = []
@@ -843,12 +826,11 @@ class History(db.Model):
         self.domain = domainid
 
     def __repr__(self):
+        """Represent."""
         return '<History %r>' % (self.msg)
 
     def add(self):
-        """
-        Add an event to history table
-        """
+        """Add an event to history table."""
         h = History()
         h.msg = self.msg
         h.detail = self.detail
@@ -858,9 +840,7 @@ class History(db.Model):
 
     @classmethod
     def remove_all(cls):
-        """
-        Remove all history from DB
-        """
+        """Remove all history from DB."""
         try:
             db.session.query(History).delete()
             db.session.commit()
@@ -874,20 +854,23 @@ class History(db.Model):
 
 
 class Rrset(db.Model):
-    """SQLAlchemy model for the history database table"""
+    """SQLAlchemy model for the history database table."""
+
+    # pylint: disable=R0913,W0622,R0903
     rrsetid = db.Column(db.Integer, primary_key=True)
     rrsets = db.Column(db.JSON)
     tstmp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # pylint: disable=R0913,W0622,R0903
     def __init__(self, rrsets=None):
+        """Initialze class properties."""
         self.rrsets = rrsets
         self.tstmp = datetime.utcnow()
         self.rrsetid = None
 
 
 class Setting(db.Model):
-    """SQLAlchemy Model for the setting table in the database"""
+    """SQLAlchemy Model for the setting table in the database."""
+
     # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64))
@@ -895,15 +878,14 @@ class Setting(db.Model):
 
     # pylint: disable=R0913,W0622
     def __init__(self, id=None, name=None, value=None):
+        """Initialize class propertes."""
         self.id = id
         self.name = name
         self.value = value
 
     @classmethod
     def set_mainteance(cls, mode):
-        """
-        mode = True/False
-        """
+        """mode = True/False."""
         mode = str(mode)
         maintenance = Setting.query.filter(Setting.name == 'maintenance').first()
         try:
@@ -925,7 +907,7 @@ class Setting(db.Model):
 
     @classmethod
     def toggle(cls, setting):
-        """Toggle Setting"""
+        """Toggle Setting."""
         setting = str(setting)
         current_setting = Setting.query.filter(Setting.name == setting).first()
         try:
@@ -947,7 +929,7 @@ class Setting(db.Model):
 
     @classmethod
     def set(cls, setting, value):
-        """Set Setting"""
+        """Set Setting."""
         setting = str(setting)
         new_value = str(value)
         current_setting = Setting.query.filter(Setting.name == setting).first()

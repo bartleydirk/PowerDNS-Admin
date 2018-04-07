@@ -15,13 +15,14 @@ from app import app, db
 from app.models import Domain
 # from app.models import User, Domain, History, Setting, DomainSetting
 # pylint: disable=E0401,E0001
-from .base import Record
 import dns.reversename
+from .base import Record
 
 DBGREQUEST = False
 DBGDATA = False
 DBGHDR = False
 SHOWLOG = True
+AUTOREVERSE = True
 
 LOGFILE = '%s/server.log' % os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 # show("log file is %s" % (LOGFILE), 10)
@@ -39,6 +40,7 @@ def show(message, level=5):
 
 
 def get_domain_fromname(name):
+    """A method to utilize the PDNS Admin of domains to determine which this is in."""
     name_split = name.split('.')
     name_split.reverse()
     test = ''
@@ -242,7 +244,7 @@ def addhost():
             # r_name = dns.reversename.to_address(recorddata['content'])
             reverse_host_address = dns.reversename.from_address(recorddata['content']).to_text()
             show("r_name is %s" % (reverse_host_address), level=6)
-            if True:
+            if AUTOREVERSE:
                 revrec = Record(name=reverse_host_address, type='PTR', status=False, ttl=86400, data=name)
                 dom_ = Domain()
                 domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
@@ -264,7 +266,7 @@ def delrec():
     retval = 'begin'
     if not token_verify():
         retval = jsonify(retval='No Token')
-    username = getheadervalue(request.headers, 'X-API-User')
+    # username = getheadervalue(request.headers, 'X-API-User') FIX use this to LOG
 
     recorddata = json.loads(request.data)
     show("print of recorddata is :\n%s" % (recorddata), level=6)
@@ -274,15 +276,12 @@ def delrec():
         show("name is :%s" % (name), level=6)
         domainname = get_domain_fromname(name)
 
-        if 'ttl' in recorddata:
-            ttl = int(recorddata['ttl'])
-
         rectype = 'A'
         if 'rectype' in recorddata:
             rectype = recorddata['rectype']
 
         rec = Record(name=name, type=rectype, status=False)
-        deleteresult = rec.delete(domainname, username=username)
+        deleteresult = rec.delete(domainname)  # , username=username
 
     return jsonify(retval=retval, **deleteresult)
 
@@ -296,7 +295,7 @@ def fixrev():
     updateresult = {}
     if not token_verify():
         retval = jsonify(retval='No Token')
-    username = getheadervalue(request.headers, 'X-API-User')
+    # username = getheadervalue(request.headers, 'X-API-User')  FIX use this to LOG
     dom_ = Domain()
 
     recorddata = json.loads(request.data)
