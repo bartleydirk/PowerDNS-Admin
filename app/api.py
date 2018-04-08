@@ -257,6 +257,7 @@ def addhost():
                 revrec = Record(name=reverse_host_address, type='PTR', status=False, ttl=86400, data=name)
                 dom_ = Domain()
                 domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
+                show("r_name is %s about to update" % (reverse_host_address), level=6)
                 revresult = revrec.update(domain_reverse_name, name)
                 if 'status' in revresult:
                     addresult['revstatus'] = revresult['status']

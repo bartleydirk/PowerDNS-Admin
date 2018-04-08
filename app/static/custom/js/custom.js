@@ -13,7 +13,7 @@ function applyChanges(data, url, showResult, refreshPage, rrsetid) {
         crossDomain : true,
         dataType : "json",
         success : function(data, status, jqXHR) {
-            console.log("Applied changes successfully.")
+            console.log("Applied changes successfully, refresh is " + refreshPage)
             if (showResult) {
                 var modal = $("#modal_success");
                 modal.find('.modal-body p').text("Applied changes successfully");

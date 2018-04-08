@@ -5,6 +5,7 @@ import itertools
 import urlparse
 import re
 import traceback
+import json
 
 from distutils.util import strtobool
 
@@ -131,24 +132,7 @@ class Record(object):
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",
                           self.name, self.type, self.data, domain, str(e))
-            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
-
-    # def api_serverconnect(self, domain, data):
-    #    """Connect to server on behalf of api"""
-    #    headers = {}
-    #    headers['X-API-Key'] = PDNS_API_KEY
-    #    print("\n\napi_serverconnect %s %s\n\n" % (domain, data))
-    #    try:
-    #        url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
-    #        LOGGING.debug('The data sent to the Powerdns server follows')
-    #        LOGGING.debug(data)
-    #        jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
-    #        LOGGING.debug('The data returned from the Powerdns server follows')
-    #        LOGGING.debug(jdata)
-    #        return {'status': 'ok', 'msg': 'Success api server connect', 'returndata': jdata}
-    #    except Exception as e:
-    #        LOGGING.error("Fail base.py api_serverconnect api server connect")
-    #        return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+            return {'status': 'error', 'msg': 'There was something wrong in Add, please contact administrator'}
 
     def compare(self, domain_name, new_records):
         """Compare new records with current powerdns record data.
@@ -177,6 +161,7 @@ class Record(object):
 
     def apply(self, domain, post_records):
         """Apply record changes to domain."""
+        LOGGING.info('apply() domain is %s' % (domain))
         # pylint: disable=R0912,R0915
         records = []
         for r in post_records:
@@ -294,6 +279,7 @@ class Record(object):
                                                    "priority": 10, } for item in group]})
         self.final_records_limit()
         postdata_for_changes = {"rrsets": self.net_final}
+        LOGGING.info('apply() postdata_for_changes is %s' % (json.dumps(postdata_for_changes)))
 
         try:
             headers = {}
@@ -460,28 +446,24 @@ class Record(object):
             for key in self.unique_key:
                 testme = self.unique_key[key]
                 if testme['same'] is False:
-                    # if 'delete_records' in testme:
-                    #    deleted_record = self.records_delete[testme['delete_records']]
                     current = None
                     if 'current_records' in testme:
                         current = self.current_records[testme['current_records']]
-                    # if 'final_records' in testme:
-                    #    final = self.fnl_recs[testme['final_records']]
-                    if testme['change_type'] == 'DELETE':
-                        # r_name = current['name'] + '.'
-                        r_content = current['content']
-                        reverse_host_address = dns.reversename.from_address(r_content).to_text()
-                        domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
-                        self.name = reverse_host_address
-                        self.type = 'PTR'
-                        self.data = r_content
-                        self.delete(domain_reverse_name)
-                    else:
-                        # r_name = current['name'] + '.'
-                        r_content = current['content']
-                        reverse_host_address = dns.reversename.from_address(r_content).to_text()
-                        domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
-                        dom_.create_reverse_domain(domain, domain_reverse_name)
+                    # LOGGING.info('current is %s' % (current))
+                    if current['type'] == 'A':
+                        if testme['change_type'] == 'DELETE':
+                            r_content = current['content']
+                            reverse_host_address = dns.reversename.from_address(r_content).to_text()
+                            domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
+                            self.name = reverse_host_address
+                            self.type = 'PTR'
+                            self.data = r_content
+                            self.delete(domain_reverse_name)
+                        else:
+                            r_content = current['content']
+                            reverse_host_address = dns.reversename.from_address(r_content).to_text()
+                            domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
+                            dom_.create_reverse_domain(domain, domain_reverse_name)
 
         return retval
 
@@ -500,7 +482,7 @@ class Record(object):
             return {'status': 'ok', 'msg': 'Record was removed successfully'}
         except Exception:
             LOGGING.error("Cannot remove record %s/%s/%s from domain %s", self.name, self.type, self.data, domain)
-            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+            return {'status': 'error', 'msg': 'There was something wrong in delete, please contact administrator'}
 
     def is_allowed(self):
         """Check if record is allowed to edit/removed."""
@@ -556,7 +538,7 @@ class Record(object):
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",
                           self.name, self.type, self.data, domain, str(e))
-            return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+            return {'status': 'error', 'msg': 'There was something wrong in update, please contact administrator'}
 
 
 class Server(object):

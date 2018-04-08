@@ -5,6 +5,7 @@ import json
 import os
 import traceback
 import re
+from pprint import pformat
 from distutils.util import strtobool
 from functools import wraps
 from io import BytesIO
@@ -19,7 +20,7 @@ from werkzeug.security import gen_salt
 from flask import g, request, make_response, jsonify, render_template, session, redirect, url_for, \
     send_from_directory, abort
 
-from app import app, login_manager, github, db, NEW_SCHEMA
+from app import app, login_manager, github, db, NEW_SCHEMA, LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
 from app.base import Record, Server, Anonymous
@@ -525,6 +526,7 @@ def record_apply(domain_name):
         pdata = request.form.get('postdata')
         rrsetid = request.form.get('rrsetid', None)
         jdata = json.loads(pdata)
+        # LOGGING.info('record_apply rrsetid %s ', pformat(jdata))
         rec = Record(rrsetid=rrsetid)
         result = rec.apply(domain_name, jdata)
         if result['status'] == 'ok':
@@ -554,7 +556,7 @@ def record_update(domain_name):
             return make_response(jsonify({'status': 'error', 'msg': result['msg']}), 500)
     except Exception:
         print traceback.format_exc()
-        return make_response(jsonify({'status': 'error', 'msg': 'Error when applying new changes'}), 500)
+        return make_response(jsonify({'status': 'error', 'msg': 'Error when reocrd_updating new changes'}), 500)
 
 
 @app.route('/domain/<string:domain_name>/record/<string:record_name>/type/<string:record_type>/delete', methods=['GET'])

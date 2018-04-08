@@ -737,7 +737,7 @@ class Domain(db.Model):
                 utils.fetch_json(url, headers=headers, method='PUT')
                 return {'status': 'ok', 'msg': 'Update from Master successfully'}
             except Exception:
-                return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+                return {'status': 'error', 'msg': 'There was something wrong ufm, please contact administrator'}
         else:
             return {'status': 'error', 'msg': 'This domain doesnot exist'}
 
@@ -757,7 +757,7 @@ class Domain(db.Model):
                 else:
                     return {'status': 'ok', 'dnssec': jdata}
             except Exception:
-                return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
+                return {'status': 'error', 'msg': 'There was something wrong gdd, please contact administrator'}
         else:
             return {'status': 'error', 'msg': 'This domain doesnot exist'}
 
