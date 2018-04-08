@@ -44,21 +44,27 @@ def get_domain_fromname(name):
     name_split = name.split('.')
     name_split.reverse()
     test = ''
-    retval = None
+    testlst = []
     for item in name_split:
-        if item != '' and not retval:
+        if item != '':
             if test == '':
                 test = "%s" % (item)
             else:
                 test = "%s.%s" % (item, test)
-            # show("get_domain_fromname of testing is :%s" % (test), level=6)
+            testlst.append(test)
+    testlst.reverse()
+    print(pformat(testlst))
+    retval = None
+    for test in testlst:
+        if not retval:
+            # show("get_domain_fromname of testing if string is a domain : '%s'" % (test), level=6)
             mdl = db.session.query(Domain)\
                     .filter(Domain.name == test)\
                     .first()
             if mdl:
                 retval = mdl.name
     if not retval:
-        raise RuntimeError("Issue getting domain name from name %s" % (domainname))
+        raise RuntimeError("Issue getting domain name from name %s" % (name))
     return retval
 
 
