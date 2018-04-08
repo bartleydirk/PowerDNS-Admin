@@ -44,8 +44,9 @@ def get_domain_fromname(name):
     name_split = name.split('.')
     name_split.reverse()
     test = ''
+    retval = None
     for item in name_split:
-        if item != '':
+        if item != '' and not retval:
             if test == '':
                 test = "%s" % (item)
             else:
@@ -55,8 +56,10 @@ def get_domain_fromname(name):
                     .filter(Domain.name == test)\
                     .first()
             if mdl:
-                return mdl.name
-    return None
+                retval = mdl.name
+    if not retval:
+        raise RuntimeError("Issue getting domain name from name %s" % (domainname))
+    return retval
 
 
 def getconfigfile():
@@ -219,7 +222,7 @@ def addhost():
     if 'name' in recorddata and 'content' in recorddata:
         show("pformat of recorddata is :\n%s" % (pformat(recorddata, indent=4)), level=6)
         name = recorddata['name']
-        show("name is :%s" % (name), level=6)
+        show("name is : '%s'" % (name), level=6)
         domainname = get_domain_fromname(name)
         # show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
         # , type_='A', ttl=86400, disabled=False
