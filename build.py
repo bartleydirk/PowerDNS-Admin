@@ -1,20 +1,22 @@
 #!/usr/bin/env /usr/bin/python
-""" Coordinates the tasks of refreshing the configuration (i.e. version.cfg) """
-import os, re
+"""Coordinates the tasks of refreshing the configuration (i.e. version.cfg)."""
+import os
+import re
 import subprocess
 import ConfigParser
-#from pprint import pprint
+# from pprint import pprint
 
 
 VERSION_SECTION = 'vers'
 
 
 class VersionUpdater(object):
-    """ Updates the version config for the files in the static directory """
-    def __init__(self, appname):
-        """ Creates new instance of VersionUpdater
+    """Updates the version config for the files in the static directory."""
 
-        :param appname: the directory name for the app's current working directory
+    def __init__(self, appname):
+        """Create new instance of VersionUpdater.
+
+        :param appname: the directory name for the app's cwd
         """
         self.exepath = '%s' % (os.path.dirname(os.path.realpath(__file__)))
         self.cnfgfile = '%s/versions.cfg' % self.exepath
@@ -22,13 +24,13 @@ class VersionUpdater(object):
         self.config = ConfigParser.RawConfigParser()
 
     def init_config(self):
-        """ Preps the config file safely (so other sections stay) """
-        #self.config.read(self.cnfgfile)
+        """Prep the config file safely (so other sections stay)."""
+        # self.config.read(self.cnfgfile)
         if not self.config.has_section(VERSION_SECTION):
             self.config.add_section(VERSION_SECTION)
 
     def run(self):
-        """ Executes the job """
+        """Execute the job"""
         self.init_config()
         files = self.list_files()
         #pprint(files)
@@ -46,8 +48,9 @@ class VersionUpdater(object):
                 self.config.write(configfile)
 
     def list_files(self):
-        """ Iterates recursively through the static folder and
-            returns a list of the files in it.
+        """Iterate recursively through the static folder.
+
+        Returns a list of the files in it.
         """
         re_css = re.compile(r'\.css$')
         re_js = re.compile(r'\.js$')
@@ -63,7 +66,7 @@ class VersionUpdater(object):
 
 
 def main():
-    """ Main entry point for build.py """
+    """Main entry point for build.py."""
     updater = VersionUpdater('PowerDNS-Admin')
     updater.run()
 

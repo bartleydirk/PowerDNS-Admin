@@ -10,10 +10,10 @@ import json
 from distutils.util import strtobool
 
 from flask_login import AnonymousUserMixin, current_user
-from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
-# pylint: disable=e0611
-from app.lib import utils
 import dns.reversename
+from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
+# pylint: disable=E0611
+from app.lib import utils
 from .models import History, Domain, DomainSetting, Setting, Rrset
 # pylint: disable=W0703,R1705
 
@@ -161,8 +161,8 @@ class Record(object):
 
     def apply(self, domain, post_records):
         """Apply record changes to domain."""
-        LOGGING.info('apply() domain is %s' % (domain))
         # pylint: disable=R0912,R0915
+        LOGGING.info('apply() domain is %s', (domain))
         records = []
         for r in post_records:
             r_name = domain if r['record_name'] in ['@', ''] else r['record_name'] + '.' + domain
@@ -279,7 +279,7 @@ class Record(object):
                                                    "priority": 10, } for item in group]})
         self.final_records_limit()
         postdata_for_changes = {"rrsets": self.net_final}
-        LOGGING.info('apply() postdata_for_changes is %s' % (json.dumps(postdata_for_changes)))
+        LOGGING.info('apply() postdata_for_changes is %s', (json.dumps(postdata_for_changes)))
 
         try:
             headers = {}

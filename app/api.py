@@ -6,16 +6,16 @@ import os
 import base64
 from pprint import pformat
 # pylint: disable=E0611
+import dns.reversename
 from flask import request, jsonify
 from admin_api.crypt import Keypair  # , limitlines
 # pylint: disable=E0401
-from models import User
+from app.models import User
 
 from app import app, db
 from app.models import Domain
 # from app.models import User, Domain, History, Setting, DomainSetting
 # pylint: disable=E0401,E0001
-import dns.reversename
 from .base import Record
 
 DBGREQUEST = False
@@ -36,7 +36,7 @@ def show(message, level=5):
     log_fv.close()
     if SHOWLOG:
         if level > 5:
-            print(message)
+            print message
 
 
 def get_domain_fromname(name):
@@ -53,7 +53,7 @@ def get_domain_fromname(name):
                 test = "%s.%s" % (item, test)
             testlst.append(test)
     testlst.reverse()
-    print(pformat(testlst))
+    print pformat(testlst)
     retval = None
     for test in testlst:
         if not retval:

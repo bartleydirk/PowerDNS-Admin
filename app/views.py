@@ -5,7 +5,7 @@ import json
 import os
 import traceback
 import re
-from pprint import pformat
+#  from pprint import pformat
 from distutils.util import strtobool
 from functools import wraps
 from io import BytesIO
@@ -20,7 +20,7 @@ from werkzeug.security import gen_salt
 from flask import g, request, make_response, jsonify, render_template, session, redirect, url_for, \
     send_from_directory, abort
 
-from app import app, login_manager, github, db, NEW_SCHEMA, LOGGING
+from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
 from app.base import Record, Server, Anonymous
