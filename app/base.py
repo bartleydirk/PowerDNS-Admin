@@ -7,6 +7,7 @@ import re
 import traceback
 import json
 
+# pylint: disable=E0611
 from distutils.util import strtobool
 
 from flask_login import AnonymousUserMixin, current_user
@@ -15,7 +16,7 @@ from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL
 # pylint: disable=E0611
 from app.lib import utils
 from .models import History, Domain, DomainSetting, Setting, Rrset
-# pylint: disable=W0703,R1705
+# pylint: disable=W0703,R1705,E1101
 
 
 class Anonymous(AnonymousUserMixin):
@@ -34,7 +35,7 @@ class Record(object):
     Object used to communicate with PowerDNS API
     """
 
-    # pylint: disable=C0103,R0913,W0622
+    # pylint: disable=C0103,R0913,W0622,r0902
     def __init__(self, name=None, type=None, status=False, ttl=None, data=None, rrsetid=None):
         """Initialize values for class Record."""
         self.name = name
@@ -161,7 +162,7 @@ class Record(object):
 
     def apply(self, domain, post_records):
         """Apply record changes to domain."""
-        # pylint: disable=R0912,R0915
+        # pylint: disable=R0912,R0915,R0914
         LOGGING.info('apply() domain is %s', (domain))
         records = []
         for r in post_records:
@@ -345,7 +346,7 @@ class Record(object):
 
     def final_records_limit(self):
         """limit the number of replace changes, for LOGGING."""
-        # pylint: disable=R0912,R0915
+        # pylint: disable=R0912,R0915,R0914
         # a key to unique identify all records wether added, deleted or modified
         self.unique_key = {}
         notcurrent = []

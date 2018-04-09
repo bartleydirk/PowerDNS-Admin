@@ -4,6 +4,7 @@ Application for managing Power Dns via API protocol.
 Flask application built to use Sqlalchemy internally and the pdns api
 to make changes to pdns
 """
+# pylint: disable=C0103,C0413,E0611,E0401
 import os
 from distutils.version import StrictVersion
 
@@ -13,8 +14,6 @@ from flask_login import LoginManager
 from werkzeug.contrib.fixers import ProxyFix
 from flask import Flask, request, session, redirect, url_for
 
-
-# pylint: disable=C0103,C0413
 app = Flask(__name__)
 app.config.from_object('config')
 app.wsgi_app = ProxyFix(app.wsgi_app)

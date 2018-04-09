@@ -15,7 +15,7 @@ from app.models import User
 from app import app, db
 from app.models import Domain
 # from app.models import User, Domain, History, Setting, DomainSetting
-# pylint: disable=E0401,E0001
+# pylint: disable=E0401,E0001,E1101
 from .base import Record
 
 DBGREQUEST = False

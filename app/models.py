@@ -1,5 +1,5 @@
 """module to contain sqlalchemy models."""
-
+# pylint: disable=W0703,R1705,E1101,E0611,E0401,R0902
 import os
 import base64
 import urlparse
@@ -20,8 +20,6 @@ from app.lib import utils
 from app import PDNS_STATS_URL, LDAP_URI, LDAP_USERNAME, LDAP_PASSWORD, LDAP_TYPE, LDAP_USERNAMEFIELD, LOGGING, \
     LDAP_FILTER, LDAP_SEARCH_BASE, PDNS_API_KEY, API_EXTENDED_URL  # , NEW_SCHEMA
 
-
-# pylint: disable=W0703,R1705
 
 class User(db.Model):
     """sqlalchmy model for a user."""
@@ -496,7 +494,7 @@ class Domain(db.Model):
     @classmethod
     def update(cls):
         """Fetch zones (domains) from PowerDNS and update into DB."""
-        # pylint: disable=R0915
+        # pylint: disable=R0915,R0914
         db_domain = Domain.query.all()
         list_db_domain = [d.name for d in db_domain]
         dict_db_domain = dict((x.name, x) for x in db_domain)

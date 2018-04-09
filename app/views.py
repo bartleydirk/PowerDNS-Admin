@@ -1,5 +1,5 @@
 """Views for the Power DNS Admin application."""
-
+# pylint: disable=E1101,E0611,E0401
 import base64
 import json
 import os
@@ -206,7 +206,7 @@ def github_login():
 def login():
     """Login Route."""
     # these parameters will be needed in multiple paths
-    # pylint: disable=R0911,E1126
+    # pylint: disable=R0912,E1126,R0914,R0911
     LDAP_ENABLED = True if 'LDAP_TYPE' in app.config.keys() else False
     LOGIN_TITLE = app.config['LOGIN_TITLE'] if 'LOGIN_TITLE' in app.config.keys() else ''
     BASIC_ENABLED = app.config['BASIC_ENABLED']
@@ -348,6 +348,7 @@ def dashboard():
 @login_required
 def domain(domain_name):
     """Domain Route, Listing the records."""
+    # pylint: disable=R0914,R0912
     rec = Record()
     domain = Domain.query.filter(Domain.name == domain_name).first()
     if domain:
@@ -404,6 +405,7 @@ def domain(domain_name):
 @admin_role_required
 def domain_add():
     """Route to add a Domain."""
+    # pylint: disable=R0914,R0912,
     # here here here
     if request.method == 'POST':
         try:
@@ -690,6 +692,7 @@ def admin_createuser():
 @admin_role_required
 def admin_manageuser():
     """View to manage a user."""
+    # pylint: disable=R0912,R0914
     retval = None
     if request.method == 'GET':
         users = User.query.order_by(User.username).all()
@@ -863,6 +866,7 @@ def dyndns_checkip():
 @dyndns_login_required
 def dyndns_update():
     """Dynamic Dns Update."""
+    # pylint: disable=R0912,R0914
     # dyndns protocol response codes in use are:
     # good: update successful
     # nochg: IP address already set to update address

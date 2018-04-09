@@ -1,11 +1,9 @@
-"""
-History View
-"""
+"""History View."""
 
 from flask_login import current_user, login_required
 from flask import request, render_template, make_response, jsonify
 from app import app, db
-# pylint: disable=E0401
+# pylint: disable=E0401,E1101
 from app.models import History, Domain
 # from distutils.util import strtobool
 
@@ -14,7 +12,7 @@ from app.models import History, Domain
 @app.route('/history', methods=['GET', 'POST'])
 @login_required
 def admin_history():
-    """A method to act as route for rendering history page"""
+    """A method to act as route for rendering history page."""
     retval = None
     if request.method == 'POST':
         history = History()
@@ -50,7 +48,7 @@ def admin_history():
 @app.route('/history_info', methods=['POST'])
 @login_required
 def history_info():
-    """A method to behave as route for ajax data in history"""
+    """A method to behave as route for ajax data in history."""
     ident = request.form.get('historyid')
     # pylint: disable=W0702
     try:
