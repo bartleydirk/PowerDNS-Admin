@@ -128,9 +128,11 @@ class Record(object):
         try:
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
             LOGGING.debug('add data to pdns server %s', data)
+            current = self.getcurrent_onrecord(domain)
+            LOGGING.debug('rec.add() current "%s" "%s" "%s"', current, domain, self.name)
             jdata = utils.fetch_json(url, headers=headers, method='PATCH', data=data)
             LOGGING.debug('fetch_json result %s', jdata)
-            self.history_write(domain, '', data['rrsets'], 'REPLACE', name=self.name, created_by=created_by)
+            self.history_write(domain, current, data['rrsets'], 'REPLACE', name=self.name, created_by=created_by)
             return {'status': 'ok', 'msg': 'Record was added successfully'}
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",
@@ -548,16 +550,28 @@ class Record(object):
             return {'status': 'error', 'msg': 'There was something wrong in update, please contact administrator'}
 
     def getcurrent_onrecord(self, domain):
+        """For history, we want the current status of a name."""
+        # self.name is required to be the name we are looking for
         retval = dict()
+        LOGGING.debug('getcurrent_onrecord() domain "%s" "%s"', domain, self.name)
         jdata = self.get_record_data(domain, fetchonly=True)
+        rrsets = None
         if 'rrsets' in jdata:
             rrsets = jdata['rrsets']
-            # LOGGING.debug("getcurrent_onrecord rrset data: %s", pformat(rrsets))
-            LOGGING.debug("getcurrent_onrecord attemting find of name : %s", self.name)
-            for item in rrsets:
-                if item['name'] == self.name:
+            findme = self.name
+        if 'records' in jdata:
+            rrsets = jdata['records']
+            re_endindot = re.compile(r'\.$')
+            findme = re_endindot.sub('', self.name)
+        LOGGING.debug("getcurrent_onrecord findme : %s self.name %s", findme, self.name)
+        cnter = None
+        if rrsets:
+            LOGGING.debug("getcurrent_onrecord iterating to find of name : %s", findme)
+            for cnter, item in enumerate(rrsets):
+                if item['name'] == findme:
                     retval = item
-                    LOGGING.debug("getcurrent_onrecord returning : %s", pformat(retval))
+        LOGGING.debug("getcurrent_onrecord returning : %s searching for %s in %s records", pformat(retval),
+                      self.name, cnter)
         return retval
 
 

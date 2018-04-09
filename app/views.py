@@ -443,11 +443,11 @@ def domain_add():
 
             if soacontent:
                 soarec = Record(name=domain_name, type='SOA', ttl=3600)
-                soarec.update(domain_name, soacontent)
+                soarec.update(domain_name, soacontent, username=current_user.username)
             if nsrecords and nscontent:
                 for nsrec in nsrecords:
                     nsrec_ = Record(name=domain_name, type='NS', ttl=3600)
-                    nsrec_.update(domain_name, nsrec['content'])
+                    nsrec_.update(domain_name, nsrec['content'], username=current_user.username)
             # end update the record using pop as a base
             if result['status'] == 'ok':
                 history = History(msg='Add domain %s' % domain_name,
@@ -914,7 +914,7 @@ def dyndns_update():
             retval = render_template('dyndns.html', response='nochg'), 200
         else:
             oldip = r.data
-            result = r.update(domain.name, myip)
+            result = r.update(domain.name, myip, username=current_user.username)
             if result['status'] == 'ok':
                 msg = 'DynDNS update: updated record %s in zone %s, it changed from %s to %s' % \
                     (hostname, domain.name, oldip, myip)

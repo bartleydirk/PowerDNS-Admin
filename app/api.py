@@ -245,7 +245,7 @@ def addhost():
         show("name be is %s" % name, level=6)
         show("content be is %s" % (recorddata['content']), level=6)
         rec = Record(name=name, type=rectype, status=False, ttl=ttl, data=recorddata['content'])
-        addresult = rec.add(domainname, username)
+        addresult = rec.add(domainname, created_by=username)
 
         if rectype == 'A':
             show("name is %s" % name, level=6)
