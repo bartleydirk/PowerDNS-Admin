@@ -392,8 +392,9 @@ def domain(domain_name):
         lastdot = re.compile(r'\.$')
         hdict = {}
         for item in hqry:
-            name = lastdot.sub('', item.name)
-            hdict[name] = item.count
+            if item.name:
+                name = lastdot.sub('', item.name)
+                hdict[name] = item.count
         return render_template('domain.html', domain=domain, records=records, editable_records=editable_records,
                                hdict=hdict, rrsetid=rec.rrsetid)
     else:

@@ -6,6 +6,7 @@ import urlparse
 import re
 import traceback
 import json
+from pprint import pformat
 
 # pylint: disable=E0611
 from distutils.util import strtobool
@@ -51,8 +52,9 @@ class Record(object):
         self.net_final = []
         self.fnl_recs = []
 
-    def get_record_data(self, domain):
+    def get_record_data(self, domain, fetchonly=False):
         """Query domain's DNS records via API."""
+        # if we already know the rrset id, means we need to pull it from the database when we got it before.
         if self.rrsetid:
             rrsetid = int(self.rrsetid)
             rrset_record = db.session.query(Rrset)\
@@ -69,7 +71,7 @@ class Record(object):
             LOGGING.error("Cannot fetch domain's record data from remote powerdns api")
             return False
 
-        if NEW_SCHEMA:
+        if NEW_SCHEMA and not fetchonly:
             rrsets = jdata['rrsets']
             for rrset in rrsets:
                 r_name = rrset['name'].rstrip('.')
@@ -303,14 +305,14 @@ class Record(object):
                 LOGGING.debug("update dyndns url: %s", url)
 
                 LOGGING.info('Record was applied successfully.')
-                self.history_log(domain)
+                self.history_log_apply(domain)
                 return {'status': 'ok', 'msg': 'Record was applied successfully'}
 
         except Exception as error:
             LOGGING.error("Cannot apply record changes to domain %s. DETAIL: %s", str(error), domain)
             return {'status': 'error', 'msg': 'There was something wrong, please contact administrator'}
 
-    def history_log(self, domain_name):
+    def history_log_apply(self, domain_name):
         """Write history Record to database."""
         for key in self.unique_key:
             testme = self.unique_key[key]
@@ -508,7 +510,7 @@ class Record(object):
                 return True
         return False
 
-    def update(self, domain, content):
+    def update(self, domain, content, username):
         """Update single record."""
         headers = {}
         headers['X-API-Key'] = PDNS_API_KEY
@@ -532,14 +534,31 @@ class Record(object):
                                              "priority": 10, }]}]}
         try:
             url = urlparse.urljoin(PDNS_STATS_URL, API_EXTENDED_URL + '/servers/localhost/zones/%s' % domain)
+            # LOGGING.debug("update dyndns data: %s", data)
+            # LOGGING.debug("update dyndns domain: %s", domain)
+            current = self.getcurrent_onrecord(domain)
             utils.fetch_json(url, headers=headers, method='PATCH', data=data)
+            self.history_write(domain, current, data, 'REPLACE', name=self.name, created_by=username)
             LOGGING.debug("update dyndns data: %s", data)
-            LOGGING.debug("update dyndns url: %s", url)
+            # LOGGING.debug("update dyndns url: %s", url)
             return {'status': 'ok', 'msg': 'Record was updated successfully'}
         except Exception as e:
             LOGGING.error("Cannot add record %s/%s/%s to domain %s. DETAIL: %s",
                           self.name, self.type, self.data, domain, str(e))
             return {'status': 'error', 'msg': 'There was something wrong in update, please contact administrator'}
+
+    def getcurrent_onrecord(self, domain):
+        retval = dict()
+        jdata = self.get_record_data(domain, fetchonly=True)
+        if 'rrsets' in jdata:
+            rrsets = jdata['rrsets']
+            # LOGGING.debug("getcurrent_onrecord rrset data: %s", pformat(rrsets))
+            LOGGING.debug("getcurrent_onrecord attemting find of name : %s", self.name)
+            for item in rrsets:
+                if item['name'] == self.name:
+                    retval = item
+                    LOGGING.debug("getcurrent_onrecord returning : %s", pformat(retval))
+        return retval
 
 
 class Server(object):

@@ -258,7 +258,7 @@ def addhost():
                 dom_ = Domain()
                 domain_reverse_name = dom_.get_reverse_domain_name(reverse_host_address)
                 show("r_name is %s about to update" % (reverse_host_address), level=6)
-                revresult = revrec.update(domain_reverse_name, name)
+                revresult = revrec.update(domain_reverse_name, name, username)
                 if 'status' in revresult:
                     addresult['revstatus'] = revresult['status']
                 if 'msg' in revresult:
@@ -305,7 +305,7 @@ def fixrev():
     updateresult = {}
     if not token_verify():
         retval = jsonify(retval='No Token')
-    # username = getheadervalue(request.headers, 'X-API-User')  FIX use this to LOG
+    username = getheadervalue(request.headers, 'X-API-User')
     dom_ = Domain()
 
     recorddata = json.loads(request.data)
@@ -331,6 +331,6 @@ def fixrev():
             # return jsonify(retval='No Domain %s' % (domain_reverse_name))
 
         rec = Record(name=revnamewdot, type='PTR', status=False, ttl=86400, data=hostname)
-        updateresult = rec.update(domain_reverse_name, hostname)
+        updateresult = rec.update(domain_reverse_name, hostname, username)
 
     return jsonify(retval=retval, **updateresult)
