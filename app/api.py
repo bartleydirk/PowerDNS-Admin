@@ -39,7 +39,7 @@ def show(message, level=5):
             print message
 
 
-def get_domain_fromname(name):
+def get_domain_fromname(name, firsttry=True):
     """A method to utilize the PDNS Admin of domains to determine which this is in."""
     name_split = name.split('.')
     name_split.reverse()
@@ -63,8 +63,11 @@ def get_domain_fromname(name):
                     .first()
             if mdl:
                 retval = mdl.name
-    if not retval:
-        raise RuntimeError("Issue getting domain name from name %s" % (name))
+    if not retval and firsttry:
+        dom_ = Domain()
+        dom_.update()
+        retval = get_domain_fromname(name, firsttry=False)
+    #    raise RuntimeError("Issue getting domain name from name %s" % (name))
     return retval
 
 
@@ -230,6 +233,9 @@ def addhost():
         name = recorddata['name']
         show("name is : '%s'" % (name), level=6)
         domainname = get_domain_fromname(name)
+        if not domainname:
+            return jsonify(error='error getting domain name')
+
         # show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
         # , type_='A', ttl=86400, disabled=False
         # pdnsdata = build_rrset(name=recorddata['name'], ipaddr=recorddata['ipaddr'])
