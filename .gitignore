@@ -22,6 +22,7 @@ nosetests.xml
 
 flask
 config.py
+config_*.py
 logfile.log
 
 db_repository/*
