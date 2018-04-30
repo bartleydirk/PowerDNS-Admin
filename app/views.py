@@ -24,6 +24,18 @@ from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
 from app.base import Record, Server, Anonymous
+# the direct to the pdns database tables
+from app.models import Domains, Records
+
+
+from wtforms import fields, widgets, form, validators
+
+
+class DomainsForm(form.Form):
+    """ Form For Domain Inquiry Page """
+    domainlike = fields.TextField('Domain Like', default='')
+    forrev = fields.SelectField('For or Rev', default='e',
+                                choices=[('f', 'Forward'), ('r', 'Reverse'), ('e', 'Either')])
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name
@@ -942,6 +954,43 @@ def dyndns_update():
     history = History(msg=msg, created_by=current_user.username)
     history.add()
     return render_template('dyndns.html', response='nohost'), 200
+
+
+def domain_query(dbg=False):
+    """View test 2nd database."""
+    frm = DomainsForm(request.form)
+    if dbg:
+        print('asdf')
+    sqry = db.session.query(Records.domain_id, db.func.count().label('rec_count'))\
+             .group_by(Records.domain_id)\
+             .subquery('sqry')
+
+    domains = db.session.query(Domains.name, Domains.id, Domains.type, Domains.master, Domains.notified_serial,
+                               sqry.c.rec_count)\
+                .join(sqry, sqry.c.domain_id == Domains.id)
+    if frm.domainlike.data != None:
+        domains = domains.filter(Domains.name.like('%%%s%%' % (frm.domainlike.data)))
+    if frm.forrev.data == 'r':
+        domains = domains.filter(Domains.name.like('%%in-addr.arpa'))
+    elif frm.forrev.data == 'f':
+        domains = domains.filter(db.not_(Domains.name.like('%%in-addr.arpa')))
+    domains = domains.order_by(Domains.name)
+    return (frm, domains)
+
+
+@app.route('/query_domain', methods=['GET', 'POST'])
+@login_required
+def query_domain():
+    """View test 2nd database."""
+    (frm, domains) = domain_query()
+    return render_template('query/domain.html', frm=frm, domains=domains)
+
+
+@app.route('/query_domain_reload', methods=['GET', 'POST'])
+@login_required
+def query_domain_reload():
+    (frm, domains) = domain_query(dbg=True)
+    return render_template('query/domain_reload.html', frm=frm, domains=domains)
 
 
 @app.route('/', methods=['GET', 'POST'])

@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% import 'domain.js' as djs %}
+{% import 'query/query.js' as qjs %}
+{% import 'query_macros.html' as qmacs %}
+
+{% block title %}
+<title>DNS Control Panel - DOMAIN</title>
+{% endblock %}
+
+{% block dashboard_stat %}
+<section class="content-header">
+</section>
+{% endblock %}
+
+{% block content %}
+<div id="domain_content_div">
+{{ qmacs.domain_content(frm, domains) }}
+</div>
+{% endblock %}
+
+{% block extrascripts %}
+{% endblock %}
+
+{% block jsfooter %}
+<script type="text/javascript">
+{{ qjs.domainqueryjs() }}
+</script>
+{% endblock %}

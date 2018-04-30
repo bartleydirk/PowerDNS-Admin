@@ -12,11 +12,12 @@ function form_to_object(form_id) {
     //if (form_id == 'jobdesteditform1_') { alert(str); }
     return dataa;
 }
+
 function form_to_object2(form_id) {
     var dataa = {};
     var str = '';
     debug = false;
-    if (debug) { console.log('form_to_object2'); }
+    if (debug) { console.log('form_to_object2 ' + form_id); }
     $('#' + form_id + ' *').filter(':input').each(function(){
         if (this.name != '' ) {
             if($(this).is(':checkbox')) {

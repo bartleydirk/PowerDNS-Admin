@@ -852,7 +852,7 @@ class History(db.Model):
 
 
 class Rrset(db.Model):
-    """SQLAlchemy model for the history database table."""
+    """SQLAlchemy model for rrset, to save what was retrieved so that a comparison can be done."""
 
     # pylint: disable=R0913,W0622,R0903
     rrsetid = db.Column(db.Integer, primary_key=True)
@@ -944,3 +944,80 @@ class Setting(db.Model):
             LOGGING.debug(traceback.format_exec())
             db.session.rollback()
             return False
+
+##################################################
+# Classes for the pdns query only table
+##################################################
+class Domains(db.Model):
+    """Model for the domains table."""
+
+    __bind_key__ = 'powerdnsadmin'
+    __tablename__ = 'domains'
+    id = db.Column(db.INTEGER(), primary_key=True, nullable=False)
+    name = db.Column(db.VARCHAR(length=255))
+    master = db.Column(db.VARCHAR(length=128))
+    last_check = db.Column(db.INTEGER())
+    type = db.Column(db.VARCHAR(length=6))
+    notified_serial = db.Column(db.INTEGER())
+    account = db.Column(db.VARCHAR(length=40))
+
+    def __repr__(self):
+        """Represent an instance of the class."""
+        return '%s %s %s %s' % (self.id, self.type, self.name, self.notified_serial)
+
+
+class Records(db.Model):
+    """Model for the records database table."""
+
+    __bind_key__ = 'powerdnsadmin'
+    __tablename__ = 'records'
+    id = db.Column(db.INTEGER(), primary_key=True, nullable=False)
+    domain_id = db.Column(db.INTEGER())
+    name = db.Column(db.VARCHAR(length=255))
+    type = db.Column(db.VARCHAR(length=10))
+    content = db.Column(db.VARCHAR(length=64000))
+    ttl = db.Column(db.INTEGER())
+    prio = db.Column(db.INTEGER())
+    change_date = db.Column(db.INTEGER())
+    disabled = db.Column(db.SmallInteger())
+    ordername = db.Column(db.VARCHAR(length=255))
+    auth = db.Column(db.SmallInteger())
+
+    def __repr__(self):
+        """Represent an instance of the class."""
+        return '%s %s %s %s %s' % (self.id, self.domain_id, self.type, self.name, self.content)
+
+
+
+class Domainmetadata(db.Model):
+    """Model for the Domain meta data."""
+
+    __bind_key__ = 'powerdnsadmin'
+    __tablename__ = 'domainmetadata'
+    id = db.Column(db.INTEGER(), primary_key=True, nullable=False)
+    domain_id = db.Column(db.INTEGER())
+    kind = db.Column(db.VARCHAR(length=32))
+    content = db.Column(db.Text())
+
+    def __init__(self, domain_id=None, kind=None, content=None):
+        """Initialize properties (sql table columns)"""
+        self.domain_id = domain_id
+        self.kind = kind
+        self.content = content
+
+
+class Tsigkeys(db.Model):
+    """Model for the Domain meta data."""
+
+    __bind_key__ = 'powerdnsadmin'
+    __tablename__ = 'tsigkeys'
+    algorithm = db.Column(db.VARCHAR(length=50))
+    id = db.Column(db.INTEGER(), primary_key=True, nullable=False)
+    name = db.Column(db.VARCHAR(length=255))
+    secret = db.Column(db.VARCHAR(length=255))
+
+    def __init__(self, algorithm=None, name=None, secret=None):
+        """Initialize properties (sql table columns)"""
+        self.algorithm = algorithm
+        self.name = name
+        self.secret = secret
