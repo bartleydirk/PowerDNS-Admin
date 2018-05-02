@@ -26,10 +26,15 @@ SQLA_DB_USER = 'powerdnsadmin'
 SQLA_DB_PASSWORD = 'powerdnsadminpassword'
 SQLA_DB_HOST = 'mysqlhostorip'
 SQLA_DB_NAME = 'powerdnsadmin'
+SQLA_DB_NAMEDB = 'pdns'
 
 #MySQL
-SQLALCHEMY_DATABASE_URI = 'mysql://'+SQLA_DB_USER+':'\
-    +SQLA_DB_PASSWORD+'@'+SQLA_DB_HOST+'/'+SQLA_DB_NAME
+SQLALCHEMY_DATABASE_URI = 'mysql://' + SQLA_DB_USER + ':' + SQLA_DB_PASSWORD + '@' + SQLA_DB_HOST + '/' + SQLA_DB_NAME
+SQLALCHEMY_BINDS = {
+    'pns':        SQLALCHEMY_DATABASE_URI,
+    'powerdnsadmin': 'mysql://' + SQLA_DB_USER + ':' + SQLA_DB_PASSWORD + '@' + SQLA_DB_HOST + '/' + SQLA_DB_NAMEDB
+}
+
 #SQLite
 #SQLALCHEMY_DATABASE_URI = 'sqlite:////path/to/your/pdns.db'
 SQLALCHEMY_MIGRATE_REPO = os.path.join(basedir, 'db_repository')
