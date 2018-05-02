@@ -78,11 +78,18 @@ Create database after having proper configs
 (flask)% ./create_db.py
 ```
 
+Use the api
+```
+The api was added to fullfill a requirement to have an api that would allow for history records to be created weather a change is made through the application or the api.
+Place the api PowerDNS-Admin_api in the same directory as PowerDNS-Admin.  Then create a symlink in PowerDNS-Admin to ../PowerDNS-Admin_api/admin_api with ln -s ../PowerDNS-Admin_api/admin_api
+```
+
 
 Run the application and enjoy!
 ```
 (flask)$ ./run.py
 ```
+
 
 ### Screenshots
 ![login page](https://github.com/ngoduykhanh/PowerDNS-Admin/wiki/images/readme_screenshots/fullscreen-login.png?raw=true)
