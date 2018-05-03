@@ -1,4 +1,4 @@
-{% macro commonform(form, tabletags=True, submitbutton=True) %}
+{% macro commonform(form, tabletags=True, submitbutton=False, onclick=None) %}
 {% if tabletags %}<table align='center'>{% endif %}
     {{ form.hidden_tag() if form.hidden_tag }}
     {% for f in form if f.type != 'CSRFTokenField' %}
@@ -12,6 +12,6 @@
     </ul></td>
     {% endif %}
     {% endfor %}
-    {% if submitbutton %}<tr><td><button type="button" onclick="reload_domains()">Whopper</button></td></tr>{% endif %}
+    {% if submitbutton %}<tr><td><button type="button" {% if onclick %}onclick="{{ onclick }}"{% endif %}>SubbyMit</button></td></tr>{% endif %}
 {% if tabletags %}</table>{% endif %}
 {% endmacro %}

@@ -12,8 +12,8 @@
 {% endblock %}
 
 {% block content %}
-<div id="domain_content_div">
-{{ qmacs.domain_content(frm, domains) }}
+<div id="records_content_div">
+{{ qmacs.records_content(frm, records) }}
 </div>
 {% endblock %}
 
@@ -22,6 +22,6 @@
 
 {% block jsfooter %}
 <script type="text/javascript">
-{{ qjs.domainqueryjs() }}
+{{ qjs.recordsqueryjs() }}
 </script>
 {% endblock %}

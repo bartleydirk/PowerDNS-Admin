@@ -1,0 +1,126 @@
+{% import 'common/macros.html' as mcrs %}
+
+{% macro domain_content(frm, domains) %}
+<form method="POST" id="domain_query_frm" action="">
+    {{ mcrs.commonform(frm, submitbutton=True, onclick='reload_domain()') }}
+</form>
+<section class="content">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <!-- /.box-body -->
+                <div class="box-header">
+                    <h3 class="box-title">Domain Query</h3>
+                </div>
+                <div class="box-body">
+                    <table id="tbl_records" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                {# <th>Master</th> #}
+                                <th>Notified</th>
+                                <th>Records</th>
+                                <!-- <th>changed</th> -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {% for dom in domains %}
+                                <tr class="{{ loop.cycle('odd', 'even') }}">
+                                    <td class="row_td">
+                                        {{ dom.name }}
+                                    </td>
+                                    <td class="row_td">
+                                        {{ dom.name }}
+                                    </td>
+                                    <td class="row_td">
+                                        {{ dom.type }}
+                                    </td>
+                                    {# <td class="row_td">
+                                         {{ dom.master }}
+                                    </td> #}
+                                    <td class="row_td">
+                                         {{ dom.notified_serial }}
+                                    </td>
+                                    <td class="row_td">
+                                         {{ dom.rec_count }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- /.box-body -->
+            </div>
+            <!-- /.box -->
+        </div>
+        <!-- /.col -->
+    </div>
+    <!-- /.row -->
+</section>
+{% endmacro %}
+
+
+{% macro records_content(frm, records) %}
+<form method="POST" id="records_query_frm" action="">
+    {{ mcrs.commonform(frm, submitbutton=True, onclick='reload_records()') }}
+</form>
+<section class="content">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <!-- /.box-body -->
+                <div class="box-header">
+                    <h3 class="box-title">Domain Query</h3>
+                </div>
+                <div class="box-body">
+                    <table id="tbl_records" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Content</th>
+                                <th>Ttl</th>
+                                <th>disabled</th>
+                                <th>domain</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                                {% for rec in records %}
+                                <tr class="{{ loop.cycle('odd', 'even') }}">
+                                    <td class="row_td">
+                                        {{ loop.index }}
+                                    </td>
+                                    <td class="row_td">
+                                        {{ rec.name }}
+                                    </td>
+                                    <td class="row_td">
+                                        {{ rec.type }}
+                                    </td>
+                                    <td class="row_td">
+                                         {{ rec.content }}
+                                    </td>
+                                    <td class="row_td">
+                                         {{ rec.ttl }}
+                                    </td>
+                                    <td class="row_td">
+                                         {{ rec.disabled }}
+                                    </td>
+                                    <td class="row_td">
+                                         {{ rec.dname }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- /.box-body -->
+            </div>
+            <!-- /.box -->
+        </div>
+        <!-- /.col -->
+    </div>
+    <!-- /.row -->
+</section>
+{% endmacro %}
