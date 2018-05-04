@@ -58,7 +58,7 @@ var table = $("#tbl_records").DataTable({
         modal.find('#button_apply_confirm').click(function() {
             var data = getTableData(table);
             console.log('button_apply_changes data is "' + data.length + '"')
-            applyChanges(data, "{{ url_for('record_apply', domain_name=domain.name) }}", true, false, {{ rrsetid }});
+            applyChangesRrset(data, "{{ url_for('record_apply', domain_name=domain.name) }}", true, false, {{ rrsetid }});
             modal.modal('hide');
         })
         modal.modal('show');

@@ -761,7 +761,7 @@ class Domain(db.Model):
 
 
 class DomainUser(db.Model):
-    """Domain User Model."""
+    """Domain User Model.  Associate a user directly to a single domain."""
 
     # pylint: disable=C0103,R0903
     __tablename__ = 'domain_user'
@@ -777,6 +777,97 @@ class DomainUser(db.Model):
     def __repr__(self):
         """Represent object."""
         return '<Domain_User %r %r>' % (self.domain_id, self.user_id)
+
+
+class UserGroup(db.Model):
+    """User Group. Group the users for associating to Groups of domains."""
+
+    __tablename__ = 'usergroup'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(128), index=True, unique=True)
+    description = db.Column(db.String(255))
+
+    def __init__(self, name, description):
+        """Initialize class properties."""
+        self.name = name
+        self.description = description
+
+    def __repr__(self):
+        """Represent object."""
+        return '<UserGroup %r %r>' % (self.name, self.description)
+
+
+class DomainGroup(db.Model):
+    """Domain Group. Group the domains for associating to Groups of users."""
+
+    __tablename__ = 'domaingroup'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    name = db.Column(db.String(128), index=True, unique=True)
+    description = db.Column(db.String(255))
+
+    def __init__(self, name, description):
+        """Initialize class properties."""
+        self.name = name
+        self.description = description
+
+    def __repr__(self):
+        """Represent object."""
+        return '<DomainGroup %r %r>' % (self.name, self.description)
+
+
+class DomainGroupDomain(db.Model):
+    """Relational Table. Tie DomainGroup to Domains."""
+
+    __tablename__ = 'domaingroup_domain'
+    id = db.Column(db.Integer, primary_key=True)
+    domaingroup_id = db.Column(db.Integer, db.ForeignKey('domain_group.id'), nullable=False)
+    domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
+
+    def __init__(self, domaingroup_id, domain_id):
+        """Initialize class properties."""
+        self.name = domaingroup_id
+        self.description = domain_id
+
+    def __repr__(self):
+        """Represent object."""
+        return '<DomainGroupDomain %r %r>' % (self.domaingroup_id, self.domain_id)
+
+
+class UserGroupUser(db.Model):
+    """Relational Table. Tie UserGroup to Users."""
+
+    __tablename__ = 'usergroup_user'
+    id = db.Column(db.Integer, primary_key=True)
+    usergroup_id = db.Column(db.Integer, db.ForeignKey('usergroup.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    def __init__(self, usergroup_id, user_id):
+        """Initialize class properties."""
+        self.usergroup_id = usergroup_id
+        self.user_id = user_id
+
+    def __repr__(self):
+        """Represent object."""
+        return '<UserGroupUser %r %r>' % (self.usergroup_id, self.user_id)
+
+
+class DomainGroupUserGroup(db.Model):
+    """Relational Table. Tie DomainGroups to UserGroups."""
+
+    __tablename__ = 'domaingroup_usergroup'
+    id = db.Column(db.Integer, primary_key=True)
+    domaingroup_id = db.Column(db.Integer, db.ForeignKey('domain_group.id'), nullable=False)
+    usergroup_id = db.Column(db.Integer, db.ForeignKey('user_group.id'), nullable=False)
+
+    def __init__(self, usergroup_id, user_id):
+        """Initialize class properties."""
+        self.usergroup_id = usergroup_id
+        self.domaingroup_id = domaingroup_id
+
+    def __repr__(self):
+        """Represent object."""
+        return '<DomainGroupUserGroup %r %r>' % (self.usergroup_id, self.domaingroup_id)
 
 
 class History(db.Model):

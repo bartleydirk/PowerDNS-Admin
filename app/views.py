@@ -9,6 +9,7 @@ import re
 from distutils.util import strtobool
 from functools import wraps
 from io import BytesIO
+from pprint import pprint
 
 import jinja2
 import qrcode as qrc
@@ -22,8 +23,9 @@ from flask import g, request, make_response, jsonify, render_template, session, 
 
 from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
-from app.models import User, Domain, History, Setting, DomainSetting
-from app.base import Record, Server, Anonymous
+from app.models import User, Domain, History, Setting, DomainSetting, UserGroup, DomainGroup, DomainGroupDomain, \
+    UserGroupUser, DomainGroupUserGroup
+from app.base import Record, Server, Anonymous, booleanval, intsafe
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name
@@ -705,35 +707,32 @@ def admin_manageuser():
         # {'action': 'delete_user', 'data': 'username'}
         #
         try:
-            pdata = request.data
-            jdata = json.loads(pdata)
-            data = jdata['data']
-
-            if jdata['action'] == 'delete_user':
-                user = User(username=data)
+            action = request.form['action']
+            username = request.form['username']
+            if action == 'delete_user':
+                user = User(username=username)
                 result = user.delete()
                 if result:
-                    history = History(msg='Delete username %s' % data, created_by=current_user.username)
+                    history = History(msg='Delete username %s' % username, created_by=current_user.username)
                     history.add()
                     retval = make_response(jsonify({'status': 'ok', 'msg': 'User has been removed.'}), 200)
                 else:
                     retval = make_response(jsonify({'status': 'error', 'msg': 'Cannot remove user.'}), 500)
 
-            elif jdata['action'] == 'revoke_user_privielges':
-                user = User(username=data)
+            elif action == 'revoke_user_privielges':
+                user = User(username=username)
                 result = user.revoke_privilege()
                 if result:
-                    history = History(msg='Revoke %s user privielges' % data, created_by=current_user.username)
+                    history = History(msg='Revoke %s user privielges' % username, created_by=current_user.username)
                     history.add()
                     retval = make_response(jsonify({'status': 'ok', 'msg': 'Revoked user privielges.'}), 200)
                 else:
                     retval = make_response(jsonify({'status': 'error', 'msg': 'Cannot revoke user privilege.'}), 500)
 
-            elif jdata['action'] == 'set_admin':
-                username = data['username']
-                is_admin = data['is_admin']
+            elif action == 'set_admin':
+                is_admin = request.form['is_admin']
                 user = User(username=username)
-                result = user.set_admin(is_admin)
+                result = user.set_admin(booleanval(is_admin))
                 if result:
                     history = History(msg='Change user role of %s' % username, created_by=current_user.username)
                     history.add()
@@ -747,6 +746,119 @@ def admin_manageuser():
             retval = make_response(jsonify({'status': 'error',
                                             'msg': 'There is something wrong, please contact Administrator.'}), 400)
     return retval
+
+
+@app.route('/admin/usergroup/list', methods=['GET', 'POST'])
+@login_required
+@admin_role_required
+def usergroup_list():
+    """View to manage a user."""
+    # pylint: disable=R0912,R0914
+    retval = None
+    if request.method == 'GET':
+        usergroups = db.session.query(UserGroup)\
+                       .order_by(UserGroup.name)
+        retval = render_template('usergroup_list.html', usergroups=usergroups)
+    return retval
+
+
+def usergroup_render(tmplate, uguid):
+    """View to create a user."""
+    usergroup = db.session.query(UserGroup)\
+                  .filter(UserGroup.id == uguid)\
+                  .first()
+
+    if usergroup:
+        # list of users for the members ui
+        users = db.session.query(User)\
+                  .order_by(User.username)\
+                  .all()
+        # list of current members for the ui
+        ugusers = db.session.query(UserGroupUser)\
+                    .filter(UserGroupUser.usergroup_id == usergroup.id)\
+                    .order_by(UserGroupUser.user_id)\
+                    .all()
+        # I want to pass a integer list not a sqlachemy list.
+        ugus = [item.user_id for item in ugusers]
+    else:
+        users = []
+        ugus = []
+
+    return render_template(tmplate, usergroup=usergroup, users=users, ugus=ugus)
+
+
+@app.route('/admin/usergroup/manage', methods=['GET', 'POST'])
+@login_required
+@admin_role_required
+def usergroup_maintain():
+    """View for maintaining user groups."""
+    ugu_id = intsafe(request.form.get('id', 0))
+    action = request.form.get('action', None)
+
+    if ugu_id == 0 and request.method == 'POST':
+        # this is a create
+        name = request.form.get('name', '')
+        description = request.form.get('description', '')
+        usergroup = UserGroup(name, description)
+        db.session.add(usergroup)
+        db.session.commit()
+        return usergroup_render('usergroup_maintain_reload.html', usergroup.id)
+
+    elif not ugu_id and request.method == 'POST':
+        pprint(asdfasfdasdfasdfwerqqwe4qwerqwerzxcvzxcvsdfgdfgsdfgsdfgf)
+
+    elif request.method == 'GET':
+        ugu_id = intsafe(request.args.get('id', 0))
+        return usergroup_render('usergroup_maintain.html', ugu_id)
+
+    elif request.method == 'POST' and action == 'info':
+        usergroup = db.session.query(UserGroup)\
+                      .filter(UserGroup.id == ugu_id)\
+                      .first()
+        if usergroup:
+            usergroup.name = request.form.get('name', '')
+            usergroup.description = request.form.get('description', '')
+            db.session.commit()
+            return usergroup_render('usergroup_maintain_reload.html', ugu_id)
+    elif request.method == 'POST' and action == 'members':
+        members_tobe = [intsafe(uident) for uident in request.form.getlist('group_users[]')]
+
+        mem_obj_list = db.session.query(UserGroupUser)\
+                                .filter(UserGroupUser.usergroup_id == ugu_id)\
+                                .all()
+        memmap = {}
+        members_current = []
+        for (pos, member) in enumerate(mem_obj_list):
+            members_current.append(member.user_id)
+            memmap[member.user_id] = pos
+
+        for uid in members_tobe:
+            if uid not in members_current:
+                newmember = UserGroupUser(ugu_id, uid)
+                db.session.add(newmember)
+
+        for uid in members_current:
+            if uid not in members_tobe:
+                db.session.delete(mem_obj_list[memmap[uid]])
+        db.session.commit()
+
+        return usergroup_render('usergroup_maintain_reload.html', ugu_id)
+
+    elif request.method == 'POST' and action == 'delete':
+        mem_obj_list = db.session.query(UserGroupUser)\
+                                .filter(UserGroupUser.usergroup_id == ugu_id)
+        for ugu in mem_obj_list:
+            db.session.delete(ugu)
+        usergroup = db.session.query(UserGroup)\
+                      .filter(UserGroup.id == ugu_id)\
+                      .first()
+        db.session.delete(usergroup)
+        db.session.commit()
+
+    else:
+        pprint(asdfzcxvzxcv)
+
+    return usergroup_render('usergroup_maintain.html', 0)
 
 
 @app.route('/admin/settings', methods=['GET'])

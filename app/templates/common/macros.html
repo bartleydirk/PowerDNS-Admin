@@ -15,3 +15,126 @@
     {% if submitbutton %}<tr><td><button type="button" {% if onclick %}onclick="{{ onclick }}"{% endif %}>SubbyMit</button></td></tr>{% endif %}
 {% if tabletags %}</table>{% endif %}
 {% endmacro %}
+
+
+{% macro modals() %}
+<div class="modal fade modal-warning" id="modal_revoke">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Confirmation</h4>
+            </div>
+            <div class="modal-body">
+                <p></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-flat btn-default pull-left"
+                    data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-flat btn-danger" id="button_revoke_confirm">Revoke</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+<div class="modal fade modal-warning" id="modal_delete">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"
+                    aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <h4 class="modal-title">Confirmation</h4>
+            </div>
+            <div class="modal-body">
+                <p></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-flat btn-default pull-left"
+                    data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-flat btn-danger" id="button_delete_confirm">Delete</button>
+            </div>
+        </div>
+        <!-- /.modal-content -->
+    </div>
+    <!-- /.modal-dialog -->
+</div>
+{% endmacro %}
+
+{% macro usergroup_maintain_content(usergroup, users, ugus) %}
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="box box-primary">
+                <div class="box-header with-border">
+                    <h3 class="box-title">{% if usergroup %}Edit User Group {{ usergroup.name }}{% else %}Create New User Group{% endif %}</h3>
+                </div>
+                <div class="box-body">
+                    <!-- Custom Tabs -->
+                    <div class="nav-tabs-custom" id="tabs">
+                        <ul class="nav nav-tabs">
+                            <li class="active"><a href="#tabs-personal" data-toggle="tab">Group Info</a></li>
+                            {% if usergroup %}<li><a href="#tabs-members" data-toggle="tab">Change members</a></li>{% endif %}
+                        </ul>
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tabs-personal">
+                                <form role="form" method="post" id="usergroup_frm">
+                                    <div class="form-group">
+                                        <label for="firstname">Group Name</label> <input type="text" class="form-control" name="name" id="name" value="{{ usergroup.name }}">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="description">Description</label> <input type="text" class="form-control" name="description" id="description" value="{{ usergroup.description }}">
+                                    </div>
+                                    <div class="form-group"><input type="hidden" class="form-control" name="id" id="id" value="{{ usergroup.id }}" readonly></div>
+                                    <div class="form-group">
+                                        <button type="button" onclick="updateinfo()" class="btn btn-flat btn-primary">Update Information</button>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="button" onclick="deletegroup()" class="btn btn-flat btn-danger button_delete">Delete&nbsp;<i class="fa fa-trash"></i></button>
+                                    </div>
+                                </form>
+                            </div>
+                            {% if usergroup %}
+                            <div class="tab-pane" id="tabs-members">
+                                <div class="box">
+                                    <form method="post" id="members_frm">
+                                    <div class="box-header"><h3 class="box-title">Users in Group {{ usergroup.name }}</h3></div>
+                                    <div class="box-body">
+                                        <div class="row">
+                                            <div class="col-xs-2">
+                                                <p>Select Users in Group.</p>
+                                                <p>Click on users to move from between columns.</p>
+                                                <p>Users in <font style="color: red;">red</font> are Administrators and already have access to <b>ALL</b> domains.</p>
+                                            </div>
+                                            <div class="form-group col-xs-2">
+                                                <select multiple="multiple" class="form-control" id="group_users" name="group_users[]">
+                                                    {% for user in users %}
+                                                    <option {% if user.id in ugus %}selected{% endif %} value="{{ user.id }}" {% if user.role.name== 'Administrator' %}style="color: red"{% endif %}>{{ user.username}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group"><input type="hidden" class="form-control" name="id" id="id" value="{{ usergroup.id }}" readonly></div>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="col-xs-offset-2">
+                                                <div class="form-group">
+                                                    <button type="button" onclick="updatemembers()" class="btn btn-flat btn-primary">Update Members</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}

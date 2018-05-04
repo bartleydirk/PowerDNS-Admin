@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% import 'common/macros.html' as mcrs %}
+{% import 'common/macros.js' as jsmacs %}
+
+
+{% block title %}
+<title>DNS Control Panel - User Management</title>
+{% endblock %} {% block dashboard_stat %}
+<section class="content-header">
+    <h1>
+        User <small>Manage user Groups</small>
+    </h1>
+    <ol class="breadcrumb">
+        <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
+        <li class="active">User</li>
+    </ol>
+</section>
+{% endblock %}
+
+
+{% block content %}
+<section class="content">
+    <div class="row">
+        <div class="col-xs-12">
+            <div class="box">
+                <div class="box-header">
+                    <h3 class="box-title">User Management</h3>
+                </div>
+                <div class="box-body">
+                    <a href="{{ url_for('usergroup_maintain') }}">
+                        <button type="button" class="btn btn-flat btn-primary pull-left button_add_user">Add User Group&nbsp;<i class="fa fa-plus"></i></button>
+                    </a>
+                </div>
+                <div class="box-body">
+                    <table id="tbl_users" class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for usergroup in usergroups %}
+                            <tr class="odd gradeX">
+                                <td><a href="{{ url_for('usergroup_maintain', id=usergroup.id) }}">{{ usergroup.name }}</a></td>
+                                <td>{{ usergroup.description }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <!-- /.box-body -->
+            </div>
+            <!-- /.box -->
+        </div>
+        <!-- /.col -->
+    </div>
+    <!-- /.row -->
+</section>
+{% endblock %}
+
+
+{% block extrascripts %}
+<script>
+{{ jsmacs.usergroups_list() }}
+</script>
+{% endblock %}
+
+
+{% block modals %}
+{{ mcrs.modals() }}
+{% endblock %}

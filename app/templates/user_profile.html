@@ -1,5 +1,10 @@
 {% extends "base.html" %}
+{% import 'common/macros.html' as mcrs %}
+{% import 'common/macros.js' as jsmacs %}
+
 {% block title %}<title>DNS Control Panel - My Profile</title>{% endblock %}
+
+
 {% block dashboard_stat %}
     <!-- Content Header (Page header) -->
     <section class="content-header">
@@ -13,6 +18,8 @@
       </ol>
     </section>
 {% endblock %}
+
+
 {% block content %}
 <section class="content">
     <div class="row">
@@ -133,40 +140,11 @@
     </div>
 </section>
 {% endblock %}
+
+
 {% block extrascripts %}
 <!-- TODO: add password and password confirmation comparisson check -->
 <script>
-
-    $(function() {
-        $('#tabs').tabs({
-            // add url anchor tags
-            activate: function(event, ui) {
-                window.location.hash = ui.newPanel.attr('id');
-            }
-        });
-        // re-set active tab (ui)
-        var activeTabIdx = $('#tabs').tabs('option','active');
-        $('#tabs li:eq('+activeTabIdx+')').tab('show')
-    });
-
-    // initialize pretty checkboxes
-    $('.otp_toggle').iCheck({
-        checkboxClass : 'icheckbox_square-blue',
-        increaseArea : '20%'
-    });
-
-    // handle checkbox toggling
-    $('.otp_toggle').on('ifToggled', function(event) {
-        var enable_otp = $(this).prop('checked');
-        var username = $(this).prop('id');
-        postdata = {
-            'action' : 'enable_otp',
-            'data' : {
-                'enable_otp' : enable_otp
-            }
-        };
-        applyChanges(postdata, $SCRIPT_ROOT + '/user/profile');
-        location.reload();
-    });
+{{ jsmacs.userprofile() }}
 </script>
 {% endblock %}

@@ -1,5 +1,34 @@
-function applyChanges(data, url, showResult, refreshPage, rrsetid) {
+function applyChanges(data, url, showResult, refreshPage) {
     var success = false;
+    $.ajax({
+        type : "POST",
+        url : url,
+        data : JSON.stringify(data),// now data come in this function
+        contentType : "application/json; charset=utf-8",
+        crossDomain : true,
+        dataType : "json",
+        success : function(data, status, jqXHR) {
+            console.log("Applied changes successfully.")
+            if (showResult) {
+                var modal = $("#modal_success");
+                modal.find('.modal-body p').text("Applied changes successfully");
+                modal.modal('show');
+            }
+            if (refreshPage) {
+                location.reload(true);
+            }
+        },
+
+        error : function(jqXHR, status) {
+            console.log(jqXHR);
+            var modal = $("#modal_error");
+            modal.find('.modal-body p').text(jqXHR["responseText"]);
+            modal.modal('show');
+        }
+    });
+}
+
+function applyChangesRrset(data, url, showResult, refreshPage, rrsetid) {
     console.log('applyChanges url is "' + url + '" rrsetid "' + rrsetid + '"');
     //strng = object_to_debugstring(data);
     //console.log('applyChanges data is :\n"' + strng + '"');
@@ -9,6 +38,65 @@ function applyChanges(data, url, showResult, refreshPage, rrsetid) {
         type : "POST",
         url : url,
         data : ntdata,
+        //contentType : "application/json; charset=utf-8",
+        crossDomain : true,
+        dataType : "json",
+        success : function(data, status, jqXHR) {
+            console.log("Applied changes successfully, refresh is " + refreshPage)
+            if (showResult) {
+                var modal = $("#modal_success");
+                modal.find('.modal-body p').text("Applied changes successfully");
+                modal.modal('show');
+            }
+            if (refreshPage) {
+                location.reload(true);
+            }
+        },
+        error : function(jqXHR, status) {
+            console.log(jqXHR);
+            var modal = $("#modal_error");
+            modal.find('.modal-body p').text(jqXHR["responseText"]);
+            modal.modal('show');
+        }
+    });
+}
+
+function applyChanges_(data, url, showResult, refreshPage) {
+    console.log('applyChanges url is "' + url + '"');
+    $.ajax({
+        url: url,
+        type: "post",
+        data: data,
+        datatype: 'json',
+        success : function(data, status, jqXHR) {
+            console.log("Applied changes successfully, refresh is " + refreshPage)
+            if (showResult) {
+                var modal = $("#modal_success");
+                modal.find('.modal-body p').text("Applied changes successfully");
+                modal.modal('show');
+            }
+            if (refreshPage) {
+                location.reload(true);
+            }
+        },
+        error : function(jqXHR, status) {
+            console.log(jqXHR);
+            var modal = $("#modal_error");
+            modal.find('.modal-body p').text(jqXHR["responseText"]);
+            modal.modal('show');
+        }
+    });
+}
+
+function applyChangesPostdata(data, url, showResult, refreshPage) {
+    var success = false;
+    console.log('applyChangesPostdata url is "' + url + '"');
+    var postdata = JSON.stringify(data);
+    var ntdata = {'postdata': postdata, 'rrsetid': rrsetid}
+    $.ajax({
+        type : "POST",
+        url : url,
+        data : NTData,
         //contentType : "application/json; charset=utf-8",
         crossDomain : true,
         dataType : "json",

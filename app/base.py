@@ -20,6 +20,30 @@ from .models import History, Domain, DomainSetting, Setting, Rrset
 # pylint: disable=W0703,R1705,E1101
 
 
+def booleanval(val):
+    """ function to return boolean """
+    if val in ['true', '1', 't', 'y', 'yes', 'Y', 'T', True, 'True']:
+        return True
+    else:
+        return False
+
+
+def intsafe(inval):
+    """ turn a value into a integer without epic fail """
+    val = inval
+    try:
+        test = val.split('.')
+        if len(test) > 1:
+            val = test[0]
+    except:
+        pass
+    try:
+        val = int(val)
+    except:
+        val = 0
+    return val
+
+
 class Anonymous(AnonymousUserMixin):
     """Class for Anonomous User."""
 

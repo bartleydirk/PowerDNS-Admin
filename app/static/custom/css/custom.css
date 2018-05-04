@@ -35,3 +35,8 @@ table td {
 table#tbl_records tr.deletepending {
     background-color: red;
 }
+
+.navbar-nav > .user-menu > .dropdown-menu > .user-footer {
+  background-color: #FF6969;
+  padding: 10px;
+}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% import 'common/macros.html' as mcrs %}
+{% import 'common/macros.js' as jsmacs %}
+
+{% block title %}<title>DNS Control Panel - My Profile</title>{% endblock %}
+
+
+{% block dashboard_stat %}
+    <!-- Content Header (Page header) -->
+    <section class="content-header">
+      <h1>
+        User Group
+        <small>Edit User Group</small>
+      </h1>
+      <ol class="breadcrumb">
+        <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i>Home</a></li>
+        <li class="active">Maintain User Group</li>
+      </ol>
+    </section>
+{% endblock %}
+
+
+{% block content %}
+<section class="content" id="usergroup_content">
+{{ mcrs.usergroup_maintain_content(usergroup, users, ugus) }}
+</section>
+{% endblock %}
+
+
+{% block extrascripts %}
+<script>
+{{ jsmacs.usergroup_maintain(usergroup) }}
+</script>
+{% endblock %}
