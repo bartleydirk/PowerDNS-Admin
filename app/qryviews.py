@@ -56,10 +56,12 @@ def query_domain_reload():
     return render_template('query/domain_reload.html', frm=frm, domains=domains)
 
 
-class dropDownChoices(object):
-    """ A class to be a reusable code base for developing dropdowns """
-    def domain(self, noany=False):
-        """ A dropdown for sales intel group """
+class DropDownChoices(object):
+    """A class to be a reusable code base for developing dropdowns."""
+
+    @classmethod
+    def domain(cls, noany=False):
+        """A dropdown domain."""
         doms = db.session.query(Domains.name, Domains.id).order_by(Domains.name)
         choices = [(dmn.id, dmn.name) for dmn in doms]
         if not noany:
@@ -81,11 +83,11 @@ class RecordsForm(form.Form):
 
 def records_query(dbg=False):
     """View test 2nd database."""
-    ddc = dropDownChoices()
+    ddc = DropDownChoices()
     frm = RecordsForm(request.form)
     frm.domain.choices = ddc.domain()
     if dbg:
-        pprint('asdf')
+        print('asdf')
     records = db.session.query(Records.name, Records.id, Records.type, Records.domain_id, Records.type, Records.content,
                                Records.ttl, Records.prio, Records.change_date, Records.disabled, Records.ordername,
                                Records.auth, Domains.name.label('dname'))\

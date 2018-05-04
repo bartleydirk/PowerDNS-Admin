@@ -24,11 +24,6 @@ from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
 from app.base import Record, Server, Anonymous
-# the direct to the pdns database tables
-from app.models import Domains, Records
-
-
-from wtforms import fields, widgets, form, validators
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name

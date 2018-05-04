@@ -948,6 +948,9 @@ class Setting(db.Model):
 ##################################################
 # Classes for the pdns query only table
 ##################################################
+# pylint: disable=C0103,R0903
+
+
 class Domains(db.Model):
     """Model for the domains table."""
 
@@ -988,7 +991,6 @@ class Records(db.Model):
         return '%s %s %s %s %s' % (self.id, self.domain_id, self.type, self.name, self.content)
 
 
-
 class Domainmetadata(db.Model):
     """Model for the Domain meta data."""
 
@@ -1000,7 +1002,7 @@ class Domainmetadata(db.Model):
     content = db.Column(db.Text())
 
     def __init__(self, domain_id=None, kind=None, content=None):
-        """Initialize properties (sql table columns)"""
+        """Initialize properties (sql table columns)."""
         self.domain_id = domain_id
         self.kind = kind
         self.content = content
@@ -1017,7 +1019,7 @@ class Tsigkeys(db.Model):
     secret = db.Column(db.VARCHAR(length=255))
 
     def __init__(self, algorithm=None, name=None, secret=None):
-        """Initialize properties (sql table columns)"""
+        """Initialize properties (sql table columns)."""
         self.algorithm = algorithm
         self.name = name
         self.secret = secret
