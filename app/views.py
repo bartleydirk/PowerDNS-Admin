@@ -9,6 +9,7 @@ import re
 from distutils.util import strtobool
 from functools import wraps
 from io import BytesIO
+from pprint import pprint
 
 import jinja2
 import qrcode as qrc
@@ -23,7 +24,7 @@ from flask import g, request, make_response, jsonify, render_template, session, 
 from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
-from app.base import Record, Server, Anonymous
+from app.base import Record, Server, Anonymous, booleanval
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name
@@ -705,35 +706,32 @@ def admin_manageuser():
         # {'action': 'delete_user', 'data': 'username'}
         #
         try:
-            pdata = request.data
-            jdata = json.loads(pdata)
-            data = jdata['data']
-
-            if jdata['action'] == 'delete_user':
-                user = User(username=data)
+            action = request.form['action']
+            username = request.form['username']
+            if action == 'delete_user':
+                user = User(username=username)
                 result = user.delete()
                 if result:
-                    history = History(msg='Delete username %s' % data, created_by=current_user.username)
+                    history = History(msg='Delete username %s' % username, created_by=current_user.username)
                     history.add()
                     retval = make_response(jsonify({'status': 'ok', 'msg': 'User has been removed.'}), 200)
                 else:
                     retval = make_response(jsonify({'status': 'error', 'msg': 'Cannot remove user.'}), 500)
 
-            elif jdata['action'] == 'revoke_user_privielges':
-                user = User(username=data)
+            elif action == 'revoke_user_privielges':
+                user = User(username=username)
                 result = user.revoke_privilege()
                 if result:
-                    history = History(msg='Revoke %s user privielges' % data, created_by=current_user.username)
+                    history = History(msg='Revoke %s user privielges' % username, created_by=current_user.username)
                     history.add()
                     retval = make_response(jsonify({'status': 'ok', 'msg': 'Revoked user privielges.'}), 200)
                 else:
                     retval = make_response(jsonify({'status': 'error', 'msg': 'Cannot revoke user privilege.'}), 500)
 
-            elif jdata['action'] == 'set_admin':
-                username = data['username']
-                is_admin = data['is_admin']
+            elif action == 'set_admin':
+                is_admin = request.form['is_admin']
                 user = User(username=username)
-                result = user.set_admin(is_admin)
+                result = user.set_admin(booleanval(is_admin))
                 if result:
                     history = History(msg='Change user role of %s' % username, created_by=current_user.username)
                     history.add()
@@ -748,6 +746,18 @@ def admin_manageuser():
                                             'msg': 'There is something wrong, please contact Administrator.'}), 400)
     return retval
 
+
+@app.route('/admin/managegroup', methods=['GET', 'POST'])
+@login_required
+@admin_role_required
+def admin_managegroup():
+    """View to manage a user."""
+    # pylint: disable=R0912,R0914
+    retval = None
+    if request.method == 'GET':
+        users = User.query.order_by(User.username).all()
+        retval = render_template('admin_manageuser.html', users=users)
+    return retval
 
 @app.route('/admin/settings', methods=['GET'])
 @login_required
