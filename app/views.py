@@ -5,11 +5,9 @@ import json
 import os
 import traceback
 import re
-#  from pprint import pformat
 from distutils.util import strtobool
 from functools import wraps
 from io import BytesIO
-from pprint import pprint
 
 import jinja2
 import qrcode as qrc
@@ -792,9 +790,11 @@ def usergroup_render(tmplate, uguid):
 @admin_role_required
 def usergroup_maintain():
     """View for maintaining user groups."""
+    # pylint: disable=R0914
     ugu_id = intsafe(request.form.get('id', 0))
     action = request.form.get('action', None)
 
+    retval = ''
     if ugu_id == 0 and request.method == 'POST':
         # this is a create
         name = request.form.get('name', '')
@@ -802,14 +802,11 @@ def usergroup_maintain():
         usergroup = UserGroup(name, description)
         db.session.add(usergroup)
         db.session.commit()
-        return usergroup_render('usergroup_maintain_reload.html', usergroup.id)
-
-    elif not ugu_id and request.method == 'POST':
-        pprint(asdfasfdasdfasdfwerqqwe4qwerqwerzxcvzxcvsdfgdfgsdfgsdfgf)
+        retval = usergroup_render('usergroup_maintain_reload.html', usergroup.id)
 
     elif request.method == 'GET':
         ugu_id = intsafe(request.args.get('id', 0))
-        return usergroup_render('usergroup_maintain.html', ugu_id)
+        retval = usergroup_render('usergroup_maintain.html', ugu_id)
 
     elif request.method == 'POST' and action == 'info':
         usergroup = db.session.query(UserGroup)\
@@ -819,13 +816,13 @@ def usergroup_maintain():
             usergroup.name = request.form.get('name', '')
             usergroup.description = request.form.get('description', '')
             db.session.commit()
-            return usergroup_render('usergroup_maintain_reload.html', ugu_id)
+            retval = usergroup_render('usergroup_maintain_reload.html', ugu_id)
     elif request.method == 'POST' and action == 'members':
         members_tobe = [intsafe(uident) for uident in request.form.getlist('group_users[]')]
 
         mem_obj_list = db.session.query(UserGroupUser)\
-                                .filter(UserGroupUser.usergroup_id == ugu_id)\
-                                .all()
+                         .filter(UserGroupUser.usergroup_id == ugu_id)\
+                         .all()
         memmap = {}
         members_current = []
         for (pos, member) in enumerate(mem_obj_list):
@@ -842,11 +839,11 @@ def usergroup_maintain():
                 db.session.delete(mem_obj_list[memmap[uid]])
         db.session.commit()
 
-        return usergroup_render('usergroup_maintain_reload.html', ugu_id)
+        retval = usergroup_render('usergroup_maintain_reload.html', ugu_id)
 
     elif request.method == 'POST' and action == 'delete':
         mem_obj_list = db.session.query(UserGroupUser)\
-                                .filter(UserGroupUser.usergroup_id == ugu_id)
+                         .filter(UserGroupUser.usergroup_id == ugu_id)
         for ugu in mem_obj_list:
             db.session.delete(ugu)
         usergroup = db.session.query(UserGroup)\
@@ -854,11 +851,9 @@ def usergroup_maintain():
                       .first()
         db.session.delete(usergroup)
         db.session.commit()
+        retval = ''
 
-    else:
-        pprint(asdfzcxvzxcv)
-
-    return usergroup_render('usergroup_maintain.html', 0)
+    return retval
 
 
 @app.route('/admin/settings', methods=['GET'])

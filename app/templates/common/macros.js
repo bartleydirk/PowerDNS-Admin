@@ -142,9 +142,6 @@ function updatemembers() {
             $('#usergroup_content').html(data);
             $("#group_users").multiSelect();
             $('a[href="#tabs-members"]').click();
-            //$( "#tabs" ).tabs({ active: 0 });
-            //$( "#tabs" ).tabs({ active: 1 });
-            // tabs-members
         }
     });
 }

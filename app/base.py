@@ -21,7 +21,8 @@ from .models import History, Domain, DomainSetting, Setting, Rrset
 
 
 def booleanval(val):
-    """ function to return boolean """
+    """Function to return boolean."""
+    # pylint: disable=R1703
     if val in ['true', '1', 't', 'y', 'yes', 'Y', 'T', True, 'True']:
         return True
     else:
@@ -29,17 +30,18 @@ def booleanval(val):
 
 
 def intsafe(inval):
-    """ turn a value into a integer without epic fail """
+    """Turn a value into a integer without epic fail."""
+    # pylint: disable=R1703
     val = inval
     try:
         test = val.split('.')
         if len(test) > 1:
             val = test[0]
-    except:
+    except Exception:
         pass
     try:
         val = int(val)
-    except:
+    except Exception:
         val = 0
     return val
 

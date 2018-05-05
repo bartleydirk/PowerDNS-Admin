@@ -21,6 +21,9 @@ from app import PDNS_STATS_URL, LDAP_URI, LDAP_USERNAME, LDAP_PASSWORD, LDAP_TYP
     LDAP_FILTER, LDAP_SEARCH_BASE, PDNS_API_KEY, API_EXTENDED_URL  # , NEW_SCHEMA
 
 
+# pylint: disable=R0903
+
+
 class User(db.Model):
     """sqlalchmy model for a user."""
 
@@ -782,6 +785,7 @@ class DomainUser(db.Model):
 class UserGroup(db.Model):
     """User Group. Group the users for associating to Groups of domains."""
 
+    # pylint: disable=C0103,R0903
     __tablename__ = 'usergroup'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), index=True, unique=True)
@@ -801,8 +805,9 @@ class DomainGroup(db.Model):
     """Domain Group. Group the domains for associating to Groups of users."""
 
     __tablename__ = 'domaingroup'
+    # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
-    
+
     name = db.Column(db.String(128), index=True, unique=True)
     description = db.Column(db.String(255))
 
@@ -820,6 +825,7 @@ class DomainGroupDomain(db.Model):
     """Relational Table. Tie DomainGroup to Domains."""
 
     __tablename__ = 'domaingroup_domain'
+    # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
     domaingroup_id = db.Column(db.Integer, db.ForeignKey('domain_group.id'), nullable=False)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
@@ -838,6 +844,7 @@ class UserGroupUser(db.Model):
     """Relational Table. Tie UserGroup to Users."""
 
     __tablename__ = 'usergroup_user'
+    # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
     usergroup_id = db.Column(db.Integer, db.ForeignKey('usergroup.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -856,11 +863,12 @@ class DomainGroupUserGroup(db.Model):
     """Relational Table. Tie DomainGroups to UserGroups."""
 
     __tablename__ = 'domaingroup_usergroup'
+    # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
     domaingroup_id = db.Column(db.Integer, db.ForeignKey('domain_group.id'), nullable=False)
     usergroup_id = db.Column(db.Integer, db.ForeignKey('user_group.id'), nullable=False)
 
-    def __init__(self, usergroup_id, user_id):
+    def __init__(self, usergroup_id, domaingroup_id):
         """Initialize class properties."""
         self.usergroup_id = usergroup_id
         self.domaingroup_id = domaingroup_id
