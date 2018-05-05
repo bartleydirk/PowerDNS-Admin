@@ -93,6 +93,7 @@ $('.otp_toggle').on('ifToggled', function(event) {
 });
 {% endmacro %}
 
+
 {% macro usergroups_list() %}
 {% endmacro %}
 
