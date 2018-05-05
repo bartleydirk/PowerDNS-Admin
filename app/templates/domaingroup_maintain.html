@@ -14,26 +14,26 @@
     <!-- Content Header (Page header) -->
     <section class="content-header">
       <h1>
-        User Group
-        <small>Edit User Group</small>
+        Domain Group
+        <small>Edit Domain Group</small>
       </h1>
       <ol class="breadcrumb">
         <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i>Home</a></li>
-        <li class="active">Maintain User Group</li>
+        <li class="active">Maintain Domain Group</li>
       </ol>
     </section>
 {% endblock %}
 
 
 {% block content %}
-<section class="content" id="usergroup_content">
-{{ mcrs.usergroup_maintain_content(usergroup, users, ugus) }}
+<section class="content" id="domaingroup_content">
+{{ mcrs.domaingroup_maintain_content(domaingroup, domains, dgds) }}
 </section>
 {% endblock %}
 
 
 {% block extrascripts %}
 <script>
-{{ jsmacs.usergroup_maintain(usergroup) }}
+{{ jsmacs.domaingroup_maintain(domaingroup) }}
 </script>
 {% endblock %}

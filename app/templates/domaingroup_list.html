@@ -4,15 +4,15 @@
 
 
 {% block title %}
-<title>DNS Control Panel - User Management</title>
+<title>DNS Control Panel - Domain Group List</title>
 {% endblock %} {% block dashboard_stat %}
 <section class="content-header">
     <h1>
-        User <small>Manage user Groups</small>
+        Domain <small>Manage Domain Groups</small>
     </h1>
     <ol class="breadcrumb">
         <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i> Home</a></li>
-        <li class="active">User</li>
+        <li class="active">Domain</li>
     </ol>
 </section>
 {% endblock %}
@@ -24,15 +24,15 @@
         <div class="col-xs-12">
             <div class="box">
                 <div class="box-header">
-                    <h3 class="box-title">User Group Management</h3>
+                    <h3 class="box-title">Domain Group Management</h3>
                 </div>
                 <div class="box-body">
-                    <a href="{{ url_for('usergroup_maintain') }}">
-                        <button type="button" class="btn btn-flat btn-primary pull-left button_add_user">Add User Group&nbsp;<i class="fa fa-plus"></i></button>
+                    <a href="{{ url_for('domaingroup_maintain') }}">
+                        <button type="button" class="btn btn-flat btn-primary pull-left button_add_domain">Add Domain Group&nbsp;<i class="fa fa-plus"></i></button>
                     </a>
                 </div>
                 <div class="box-body">
-                    <table id="tbl_users" class="table table-bordered table-striped">
+                    <table id="tbl_domains" class="table table-bordered table-striped">
                         <thead>
                             <tr>
                                 <th>Name</th>
@@ -40,10 +40,10 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for usergroup in usergroups %}
+                            {% for domaingroup in domaingroups %}
                             <tr class="odd gradeX">
-                                <td><a href="{{ url_for('usergroup_maintain', id=usergroup.id) }}">{{ usergroup.name }}</a></td>
-                                <td>{{ usergroup.description }}</td>
+                                <td><a href="{{ url_for('domaingroup_maintain', id=domaingroup.id) }}">{{ domaingroup.name }}</a></td>
+                                <td>{{ domaingroup.description }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -62,7 +62,7 @@
 
 {% block extrascripts %}
 <script>
-{{ jsmacs.usergroups_list() }}
+{{ jsmacs.domaingroups_list() }}
 </script>
 {% endblock %}
 

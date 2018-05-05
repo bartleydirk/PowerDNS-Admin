@@ -98,6 +98,10 @@ $('.otp_toggle').on('ifToggled', function(event) {
 {% endmacro %}
 
 
+{% macro domaingroups_list() %}
+{% endmacro %}
+
+
 {% macro usergroup_maintain(usergroup) %}
 
 $(document).ready(function() {
@@ -119,10 +123,7 @@ function updateinfo() {
         success: function(data){
             console.log('updateinfo in success');
             $('#usergroup_content').html(data);
-            // its a create
-            if (frmdata.id == '') {
-                $("#group_users").multiSelect();
-            }
+            $("#group_users").multiSelect();
         }
     });
 }
@@ -160,6 +161,74 @@ function deletegroup() {
             success: function(data){
                 console.log('deletegroup in success');
                 window.location.href = "{{ url_for('usergroup_list') }}";
+            }
+        });
+    } 
+}
+
+{% endmacro %}
+
+
+{% macro domaingroup_maintain(domaingroup) %}
+
+$(document).ready(function() {
+    console.log('ready to maintain domaingroup {% if domaingroup %}{{ domaingroup.name }}{% endif %}');
+    // setTimeout(function() { insp_part_onload() }, 500);
+    $("#group_domains").multiSelect();
+});
+
+function updateinfo() {
+    console.log('updateinfo');
+    frmdata = form_to_object2('domaingroup_frm');
+    console.log('domaingroup_frm frmdata ' + object_to_debugstring(frmdata));
+    frmdata['action'] = 'info';
+    $.ajax({
+        url: '{{ url_for("domaingroup_maintain") }}',
+        type: "post",
+        data: frmdata,
+        datatype: 'html',
+        success: function(data){
+            console.log('updateinfo in success');
+            $('#domaingroup_content').html(data);
+            // its a create
+            $("#group_domains").multiSelect();
+        }
+    });
+}
+
+function updatemembers() {
+    console.log('updatemembers');
+    frmdata = form_to_object2('members_frm');
+    console.log('domaingroup_frm frmdata ' + object_to_debugstring(frmdata));
+    frmdata['action'] = 'members';
+    $.ajax({
+        url: '{{ url_for("domaingroup_maintain") }}',
+        type: "post",
+        data: frmdata,
+        datatype: 'html',
+        success: function(data){
+            console.log('updatemembers in success');
+            $('#domaingroup_content').html(data);
+            $("#group_domains").multiSelect();
+            $('a[href="#tabs-members"]').click();
+        }
+    });
+}
+
+function deletegroup() {
+    console.log('deletegroup');
+    frmdata = form_to_object2('domaingroup_frm');
+    console.log('domaingroup_frm frmdata ' + object_to_debugstring(frmdata));
+    if (confirm("Are you sure you want to delete!")) {
+        frmdata['action'] = 'delete';
+        $.ajax({
+            url: '{{ url_for("domaingroup_maintain") }}',
+            type: "post",
+            data: frmdata,
+            datatype: 'html',
+            success: function(data){
+                console.log('deletegroup in success');
+                window.location.href = "{{ url_for('domaingroup_list') }}";
             }
         });
     } 

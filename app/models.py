@@ -827,13 +827,13 @@ class DomainGroupDomain(db.Model):
     __tablename__ = 'domaingroup_domain'
     # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
-    domaingroup_id = db.Column(db.Integer, db.ForeignKey('domain_group.id'), nullable=False)
+    domaingroup_id = db.Column(db.Integer, db.ForeignKey('domaingroup.id'), nullable=False)
     domain_id = db.Column(db.Integer, db.ForeignKey('domain.id'), nullable=False)
 
     def __init__(self, domaingroup_id, domain_id):
         """Initialize class properties."""
-        self.name = domaingroup_id
-        self.description = domain_id
+        self.domaingroup_id = domaingroup_id
+        self.domain_id = domain_id
 
     def __repr__(self):
         """Represent object."""
