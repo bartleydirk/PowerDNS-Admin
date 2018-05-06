@@ -294,17 +294,6 @@ class User(db.Model):
             db.session.rollback()
             return False
 
-    def get_domain(self):
-        """Get domains which user has permission/access to."""
-        user_domains = []
-        query = db.session.query(User, DomainUser, Domain) \
-                  .filter(User.id == self.id) \
-                  .filter(User.id == DomainUser.user_id) \
-                  .filter(Domain.id == DomainUser.domain_id).all()
-        for q in query:
-            user_domains.append(q[2])
-        return user_domains
-
     def delete(self):
         """Delete a user/revoke all user privileges first."""
         self.revoke_privilege()

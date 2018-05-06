@@ -22,7 +22,7 @@ from flask import g, request, make_response, jsonify, render_template, session, 
 from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
-from app.base import Record, Server, Anonymous, booleanval
+from app.base import Record, Server, Anonymous, booleanval, allowed_domains, DisplayUserAcls
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name
@@ -319,15 +319,13 @@ def logout():
 @login_required
 def dashboard():
     """View for the dashboard."""
+    # make sure local domain table is up to date with pdns
     Domain().update()
-    if current_user.role.name == 'Administrator':
-        domains = Domain.query.all()
-    else:
-        domains = User(id=current_user.id).get_domain()
+    domains = allowed_domains()
 
     # stats for dashboard
     domain_count = Domain.query.count()
-    users = User.query.all()
+    user_count = User.query.count()
     history_number = History.query.count()
     history = History.query.order_by(History.created_on.desc()).limit(4)
     server = Server(server_id='localhost')
@@ -337,7 +335,7 @@ def dashboard():
         uptime = filter(lambda uptime: uptime['name'] == 'uptime', statistics)[0]['value']
     else:
         uptime = 0
-    return render_template('dashboard.html', domains=domains, domain_count=domain_count, users=users,
+    return render_template('dashboard.html', domains=domains, domain_count=domain_count, user_count=user_count,
                            history_number=history_number, uptime=uptime, histories=history)
 
 
@@ -695,8 +693,14 @@ def admin_manageuser():
     # pylint: disable=R0912,R0914
     retval = None
     if request.method == 'GET':
-        users = User.query.order_by(User.username).all()
-        retval = render_template('admin_manageuser.html', users=users)
+        # query all users
+        users = db.session.query(User)\
+                  .order_by(User.username)
+
+        # use an instance of DisplayUserAcls to help with displaying what groups users are members of
+        dua = DisplayUserAcls()
+
+        retval = render_template('admin_manageuser.html', users=users, dua=dua)
 
     if request.method == 'POST':
         #

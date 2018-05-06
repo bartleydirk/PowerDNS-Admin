@@ -16,7 +16,8 @@ import dns.reversename
 from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL, NEW_SCHEMA, PRETTY_IPV6_PTR
 # pylint: disable=E0611
 from app.lib import utils
-from .models import History, Domain, DomainSetting, Setting, Rrset
+from .models import History, Domain, DomainSetting, Setting, Rrset, UserGroup, UserGroupUser, DomainGroup, \
+    DomainGroupDomain, DomainGroupUserGroup, DomainUser
 # pylint: disable=W0703,R1705,E1101
 
 
@@ -44,6 +45,82 @@ def intsafe(inval):
     except Exception:
         val = 0
     return val
+
+
+def allowed_domains():
+    """Build a query to populate domains with user and group acls considered."""
+    if current_user.role.name == 'Administrator':
+        netqry = db.session.query(Domain).all()
+    else:
+        duqry = db.session.query(Domain.id) \
+                  .join(DomainUser)\
+                  .filter(DomainUser.user_id == current_user.id)\
+                  .subquery('duqry')
+
+        uguqry = db.session.query(UserGroupUser.usergroup_id)\
+                   .filter(UserGroupUser.user_id == current_user.id)\
+                   .subquery('uguqry')
+        dgugqry = db.session.query(DomainGroupUserGroup.domaingroup_id)\
+                    .filter(DomainGroupUserGroup.usergroup_id.in_(uguqry))\
+                    .subquery('dgugqry')
+        dgqry = db.session.query(DomainGroupDomain.domain_id)\
+                  .filter(DomainGroupDomain.domaingroup_id.in_(dgugqry))\
+                  .subquery('dgqry')
+
+        netqry = db.session.query(Domain)\
+                   .filter(db.or_(Domain.id.in_(dgqry), Domain.id.in_(duqry)))\
+                   .all()
+    return netqry
+
+
+class DisplayUserAcls(object):
+    """Helper class for displaying what user groups and domain groups they are members of."""
+
+    def __init__(self):
+        """Perform queries and manipulate for easy retrival from template."""
+        ugroups_qry = db.session.query(UserGroup)
+        self.ugroups_dct = {}
+        for item in ugroups_qry:
+            self.ugroups_dct[item.id] = item
+
+        dgroups_qry = db.session.query(DomainGroup)
+        self.dgroups_dct = {}
+        for item in dgroups_qry:
+            self.dgroups_dct[item.id] = item
+
+        qry = db.session.query(UserGroupUser).all()
+        self.ugu_dict = {}
+        for item in qry:
+            if item.user_id not in self.ugu_dict:
+                self.ugu_dict[item.user_id] = [item.usergroup_id]
+            else:
+                self.ugu_dict[item.user_id].append(item.usergroup_id)
+
+        usr_domainqry = db.session.query(UserGroupUser.user_id, DomainGroupUserGroup.domaingroup_id)\
+                          .join(DomainGroupUserGroup, DomainGroupUserGroup.usergroup_id == UserGroupUser.usergroup_id)\
+                          .order_by(UserGroupUser.user_id)
+        self.userdomain_dct = {}
+        for item in usr_domainqry:
+            if item.user_id not in self.userdomain_dct:
+                self.userdomain_dct[item.user_id] = [item.domaingroup_id]
+            else:
+                self.userdomain_dct[item.user_id].append(item.domaingroup_id)
+
+    def usergroups(self, user_id):
+        """Return User groups the passed user belongs to."""
+        retval = []
+        if user_id in self.ugu_dict:
+            for usergroup_id in self.ugu_dict[user_id]:
+                retval.append(self.ugroups_dct[usergroup_id])
+        return retval
+
+    def domaingroups(self, user_id):
+        """Return Domain groups the passed user belongs to."""
+        retval = []
+        if user_id in self.userdomain_dct:
+            for domaingroup_id in self.userdomain_dct[user_id]:
+                retval.append(self.dgroups_dct[domaingroup_id])
+        return retval
 
 
 class Anonymous(AnonymousUserMixin):

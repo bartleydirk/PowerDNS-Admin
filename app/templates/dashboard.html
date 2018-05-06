@@ -45,8 +45,8 @@
                       <a href="{{ url_for('admin_manageuser') }}">
                       <div class="small-box bg-green">
                         <div class="inner">
-                          <h3>{{ users|length }}</h3>
-                          <p>{% if users|length > 1 %}Users{% else %}User{% endif %}</p>
+                          <h3>{{ user_count }}</h3>
+                          <p>{% if user_count > 1 %}Users{% else %}User{% endif %}</p>
                         </div>
                         <div class="icon">
                           <i class="fa fa-users"></i>
