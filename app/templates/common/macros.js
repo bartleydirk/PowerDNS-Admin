@@ -260,21 +260,21 @@ function deletegroup() {
 }
 
 function updateassociated() {
-    console.log('updateassociated');
+    console.log('updateassociated usergroups');
     frmdata = form_to_object2('usergroups_frm');
     console.log('domaingroups_frm frmdata ' + object_to_debugstring(frmdata));
     frmdata['action'] = 'associated';
     $.ajax({
-        url: '{{ url_for("usergroup_maintain") }}',
+        url: '{{ url_for("domaingroup_maintain") }}',
         type: "post",
         data: frmdata,
         datatype: 'html',
         success: function(data){
-            console.log('updatemembers in success');
-            $('#usergroup_content').html(data);
-            $("#group_users").multiSelect();
+            console.log('updateassociated usergroups in success from domaingroup_maintain');
+            $('#domaingroup_content').html(data);
+            $("#group_domains").multiSelect();
             $("#associated_usergroups").multiSelect();
-            $('a[href="#tabs-domaingroups"]').click();
+            $('a[href="#tabs-usergroups"]').click();
         }
     });
 }

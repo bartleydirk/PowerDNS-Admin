@@ -180,7 +180,7 @@
         <div class="col-lg-12">
             <div class="box box-primary">
                 <div class="box-header with-border">
-                    <h3 class="box-title">{% if domaingroup %}Edit Domain Group {{ domaingroup.name }}{% else %}Create New Domain Group{% endif %}</h3>
+                    <h3 class="box-title">{% if domaingroup %}Edit Domain Group <b>{{ domaingroup.name }}</b> {{ domaingroup.description }} {% else %}Create New Domain Group{% endif %}</h3>
                 </div>
                 <div class="box-body">
                     <!-- Custom Tabs -->

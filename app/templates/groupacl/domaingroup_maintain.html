@@ -13,12 +13,10 @@
 {% block dashboard_stat %}
     <!-- Content Header (Page header) -->
     <section class="content-header">
-      <h1>
-        Domain Group
-        <small>Edit Domain Group</small>
-      </h1>
+      <h1>Domain Group <small>Maintain Groupings of Domains for Access Control Lists</small></h1>
       <ol class="breadcrumb">
-        <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i>Home</a></li>
+        <li><a href="{{ url_for('dashboard') }}"><i class="fa fa-dashboard"></i>Dashboard</a></li>
+        <li><a href="{{ url_for('domaingroup_list') }}">Domain Group List</a></li>
         <li class="active">Maintain Domain Group</li>
       </ol>
     </section>

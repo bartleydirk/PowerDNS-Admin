@@ -63,7 +63,7 @@ def usergroup_render(tmplate, usergrp_id):
 @admin_role_required
 def usergroup_maintain():
     """View for maintaining user groups."""
-    # pylint: disable=R0914
+    # pylint: disable=R0914,R0912,R0915
     user_grp_id = intsafe(request.form.get('id', 0))
     action = request.form.get('action', None)
 
@@ -152,7 +152,7 @@ def usergroup_maintain():
     return retval
 
 
-########### Domain Groups Begin ###############
+#  Domain Groups Begin ###############
 
 
 @app.route('/admin/domaingroup/list', methods=['GET', 'POST'])
@@ -164,7 +164,7 @@ def domaingroup_list():
     retval = None
     if request.method == 'GET':
         domaingroups = db.session.query(DomainGroup)\
-                       .order_by(DomainGroup.name)
+                         .order_by(DomainGroup.name)
         retval = render_template('groupacl/domaingroup_list.html', domaingroups=domaingroups)
     return retval
 
@@ -178,8 +178,8 @@ def domaingroup_render(tmplate, dgdid):
     if domaingroup:
         # list of domains for the members ui
         domains = db.session.query(Domain)\
-                  .order_by(Domain.name)\
-                  .all()
+                    .order_by(Domain.name)\
+                    .all()
         # list of current members for the ui
         dgdsers = db.session.query(DomainGroupDomain)\
                     .filter(DomainGroupDomain.domaingroup_id == dgdid)\
@@ -192,7 +192,7 @@ def domaingroup_render(tmplate, dgdid):
                       .filter(DomainGroupUserGroup.domaingroup_id == dgdid)
         usrgrps_in = [dgug.usergroup_id for dgug in dgugs_lst]
         usr_grps = db.session.query(UserGroup)\
-                    .order_by(UserGroup.name)
+                     .order_by(UserGroup.name)
         #pprint(asdf)
 
     else:
@@ -210,12 +210,12 @@ def domaingroup_render(tmplate, dgdid):
 @admin_role_required
 def domaingroup_maintain():
     """View for maintaining domain groups."""
-    # pylint: disable=R0914
-    dgd_id = intsafe(request.form.get('id', 0))
+    # pylint: disable=R0914,R0912,R0915
+    domn_grp_id = intsafe(request.form.get('id', 0))
     action = request.form.get('action', None)
 
     retval = ''
-    if dgd_id == 0 and request.method == 'POST':
+    if domn_grp_id == 0 and request.method == 'POST':
         # this is a create
         name = request.form.get('name', '')
         description = request.form.get('description', '')
@@ -225,50 +225,52 @@ def domaingroup_maintain():
         retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', domaingroup.id)
 
     elif request.method == 'GET':
-        dgd_id = intsafe(request.args.get('id', 0))
-        retval = domaingroup_render('groupacl/domaingroup_maintain.html', dgd_id)
+        domn_grp_id = intsafe(request.args.get('id', 0))
+        retval = domaingroup_render('groupacl/domaingroup_maintain.html', domn_grp_id)
 
     elif request.method == 'POST' and action == 'info':
         domaingroup = db.session.query(DomainGroup)\
-                      .filter(DomainGroup.id == dgd_id)\
-                      .first()
+                        .filter(DomainGroup.id == domn_grp_id)\
+                        .first()
         if domaingroup:
             domaingroup.name = request.form.get('name', '')
             domaingroup.description = request.form.get('description', '')
             db.session.commit()
-            retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', dgd_id)
+            retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', domn_grp_id)
     elif request.method == 'POST' and action == 'members':
-        members_tobe = [intsafe(gident) for gident in request.form.getlist('group_domains[]')]
-
-        mem_obj_list = db.session.query(DomainGroupDomain)\
-                         .filter(DomainGroupDomain.domaingroup_id == dgd_id)\
-                         .all()
+        members_tobe = [intsafe(domain_id) for domain_id in request.form.getlist('group_domains[]')]
+        # query for list of objects that indicate domains belong to this domain group
+        dgd_ingroup = db.session.query(DomainGroupDomain)\
+                        .filter(DomainGroupDomain.domaingroup_id == domn_grp_id)\
+                        .all()
         memmap = {}
         members_current = []
-        for (pos, member) in enumerate(mem_obj_list):
+        for (pos, member) in enumerate(dgd_ingroup):
             members_current.append(member.domain_id)
             memmap[member.domain_id] = pos
 
-        for gid in members_tobe:
-            if gid not in members_current:
-                newmember = DomainGroupDomain(dgd_id, gid)
+        # add members that need to be
+        for dmn_id in members_tobe:
+            if dmn_id not in members_current:
+                newmember = DomainGroupDomain(domn_grp_id, dmn_id)
                 db.session.add(newmember)
 
-        for gid in members_current:
-            if gid not in members_tobe:
-                db.session.delete(mem_obj_list[memmap[gid]])
+        # remove members that need to be
+        for dmn_id in members_current:
+            if dmn_id not in members_tobe:
+                db.session.delete(dgd_ingroup[memmap[dmn_id]])
         db.session.commit()
 
-        retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', dgd_id)
+        retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', domn_grp_id)
 
     elif request.method == 'POST' and action == 'delete':
-        mem_obj_list = db.session.query(DomainGroupDomain)\
-                         .filter(DomainGroupDomain.domaingroup_id == dgd_id)
-        for dgd in mem_obj_list:
+        dgd_ingroup = db.session.query(DomainGroupDomain)\
+                        .filter(DomainGroupDomain.domaingroup_id == domn_grp_id)
+        for dgd in dgd_ingroup:
             db.session.delete(dgd)
         domaingroup = db.session.query(DomainGroup)\
-                      .filter(DomainGroup.id == dgd_id)\
-                      .first()
+                        .filter(DomainGroup.id == domn_grp_id)\
+                        .first()
         db.session.delete(domaingroup)
         db.session.commit()
         retval = ''
@@ -276,7 +278,7 @@ def domaingroup_maintain():
     elif request.method == 'POST' and action == 'associated':
         assosciated_tobe = [intsafe(usrgrp_id) for usrgrp_id in request.form.getlist('group_associated[]')]
         assoc_obj_list = db.session.query(DomainGroupUserGroup)\
-                           .filter(DomainGroupUserGroup.usergroup_id == dgd_id)\
+                           .filter(DomainGroupUserGroup.domaingroup_id == domn_grp_id)\
                            .all()
         memmap = {}
         assosciated_current = []
@@ -287,7 +289,7 @@ def domaingroup_maintain():
         # with list of associated_current and map to object
         for usr_grp_id in assosciated_tobe:
             if usr_grp_id not in assosciated_current:
-                new_dgug_obj = DomainGroupUserGroup(user_grp_id, usr_grp_id)
+                new_dgug_obj = DomainGroupUserGroup(usr_grp_id, domn_grp_id)
                 db.session.add(new_dgug_obj)
 
         for usr_grp_id in assosciated_current:
@@ -295,6 +297,6 @@ def domaingroup_maintain():
                 db.session.delete(assoc_obj_list[memmap[usr_grp_id]])
         db.session.commit()
 
-        retval = usergroup_render('groupacl/domaingroup_maintain_reload.html', user_grp_id)
+        retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', domn_grp_id)
 
     return retval
