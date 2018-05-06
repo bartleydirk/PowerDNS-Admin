@@ -760,11 +760,12 @@ def admin_settings():
     return None
 
 
-@app.route('/admin/setting/<string:setting>/toggle', methods=['POST'])
+@app.route('/admin/setting/toggle', methods=['POST'])
 @login_required
 @admin_role_required
-def admin_settings_toggle(setting):
+def admin_settings_toggle():
     """View to toggle an admin setting."""
+    setting = request.form.get('setting')
     result = Setting().toggle(setting)
     if result:
         return make_response(jsonify({'status': 'ok', 'msg': 'Toggled setting successfully.'}), 200)
@@ -772,19 +773,18 @@ def admin_settings_toggle(setting):
         return make_response(jsonify({'status': 'error', 'msg': 'Unable to toggle setting.'}), 500)
 
 
-@app.route('/admin/setting/<string:setting>/edit', methods=['POST'])
+@app.route('/admin/setting/edit', methods=['POST'])
 @login_required
 @admin_role_required
-def admin_settings_edit(setting):
+def admin_settings_edit():
     """View to Edit Settings."""
-    pdata = request.form.get('postdata', {})
-    jdata = json.loads(pdata)
-    new_value = jdata['value']
+    setting = request.form.get('setting')
+    new_value = request.form.get('value')
     result = Setting().set(setting, new_value)
     if result:
-        return make_response(jsonify({'status': 'ok', 'msg': 'Toggled setting successfully.'}), 200)
+        return make_response(jsonify({'status': 'ok', 'msg': 'Modified setting successfully.'}), 200)
     else:
-        return make_response(jsonify({'status': 'error', 'msg': 'Unable to toggle setting.'}), 500)
+        return make_response(jsonify({'status': 'error', 'msg': 'Unable to modify setting.'}), 500)
 
 
 @app.route('/user/profile', methods=['GET', 'POST'])

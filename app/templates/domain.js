@@ -92,7 +92,8 @@ var table = $("#tbl_records").DataTable({
     $(document.body).on("click", "#button_update_from_master", function(e) {
         console.log('.button_update_from_master');
         var domain = $(this).prop('id');
-        applyChanges({'domain': domain}, $SCRIPT_ROOT + '/domain/' + domain + '/update', true, false, {{ rrsetid }});
+        var url = $(this).data('code');
+        applyChanges({'domain': domain}, url, true, false, {{ rrsetid }});
     });
     //onbuttonchange();
 

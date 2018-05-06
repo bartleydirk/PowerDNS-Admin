@@ -158,11 +158,11 @@
                   </td>
                   <td>
                     {% if domain.dnssec %}
-                    <button type="button" class="btn btn-flat dnssec btn-success button_dnssec" id="{{ domain.name }}" style="width:100%;">
+                    <button type="button" class="btn btn-flat dnssec btn-success button_dnssec" id="{{ domain.name }}" data-url="{{ url_for('domain_dnssec', domain_name=domain.name) }}" style="width:100%;">
                         <i class="fa fa-lock"></i>&nbsp;Enabled
                     </button>
                     {% else %}
-                    <button type="button" class="btn btn-flat dnssec button_dnssec" id="{{ domain.name }}" style="width:100%;">
+                    <button type="button" class="btn btn-flat dnssec button_dnssec" id="{{ domain.name }}" data-url="{{ url_for('domain_dnssec', domain_name=domain.name) }}" style="width:100%;">
                         <i class="fa fa-unlock-alt"></i>&nbsp;Disabled
                     </button>
                     {% endif %}
@@ -228,7 +228,9 @@
     });
     $(document.body).on("click", ".button_dnssec", function() {
         var domain = $(this).prop('id');
-        getdnssec($SCRIPT_ROOT + '/domain/' + domain + '/dnssec');
+        var url = $(this).data('url');
+        getdnssec(url);
+        // getdnssec($SCRIPT__ROOT + '/domain/' + domain + '/dnssec');
     });
 {{ histjs.hostoryjs() }}
 </script>

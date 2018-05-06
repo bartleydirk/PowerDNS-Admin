@@ -1,5 +1,9 @@
 {% extends "base.html" %}
+
+
 {% block title %}<title>DNS Control Panel - Domain Management</title>{% endblock %}
+
+
 {% block dashboard_stat %}
 <section class="content-header">
     <h1>
@@ -12,6 +16,7 @@
     </ol>
 </section>
 {% endblock %}
+
 
 {% block content %}
 <section class="content">
@@ -79,8 +84,8 @@
                 </div>
                 <div class="box-body">
                     <p><input type="checkbox" id="{{ domain.name }}" class="dyndns_on_demand_toggle"
-                    	 {% for setting in domain.settings %}{% if setting.setting=='create_via_dyndns' and setting.value=='True' %}checked{% endif %}{% endfor %}>
-                    	 &nbsp;Allow on-demand creation of records via DynDNS updates?</p>
+                         {% for setting in domain.settings %}{% if setting.setting=='create_via_dyndns' and setting.value=='True' %}checked{% endif %}{% endfor %}>
+                         &nbsp;Allow on-demand creation of records via DynDNS updates?</p>
                     
                 </div>
             </div>
@@ -103,6 +108,8 @@
     </div>
 </section>
 {% endblock %}
+
+
 {% block extrascripts %}
 <script>
 //initialize pretty checkboxes
@@ -126,9 +133,10 @@ $('.dyndns_on_demand_toggle').on('ifToggled', function(event) {
         'data' : {
             'setting' : 'create_via_dyndns',
             'value' : is_checked
-        }
+    }
     };
-    applyChanges(postdata,  $SCRIPT_ROOT + '/domain/' + domain + '/managesetting', true);
+    applyChanges(postdata, '{{ url_for("admin_setdomainsetting", domain_name=domain.name) }}', true);
+    //applyChanges(postdata,  $SCRIPT__ROOT + '/domain/' + domain + '/managesetting', true);
 });
 $('.auto_ptr_toggle').on('ifToggled', function(event) {
     var is_checked = $(this).prop('checked');
@@ -140,7 +148,8 @@ $('.auto_ptr_toggle').on('ifToggled', function(event) {
             'value' : is_checked
         }
     };
-    applyChanges(postdata,  $SCRIPT_ROOT + '/domain/' + domain + '/managesetting', true);
+    applyChanges(postdata, '{{ url_for("admin_setdomainsetting", domain_name=domain.name) }}', true);
+    // applyChanges(postdata,  $SCRIPT__ROOT + '/domain/' + domain + '/managesetting', true);
 });
 
 // handle deletion of domain
@@ -150,7 +159,8 @@ $(document.body).on('click', '.delete_domain', function() {
     var info = "Are you sure you want to delete " + domain + "?";
     modal.find('.modal-body p').text(info);
     modal.find('#button_delete_confirm').click(function() {
-        $.get($SCRIPT_ROOT + '/admin/domain/' + domain + '/delete', function() {
+        //$.get('{{ url_for("admin_setdomainsetting", domain_name=domain.name) }}', function() {
+        $.get($SCRIPT__ROOT + '/admin/domain/' + domain + '/delete', function() {
             window.location.href = '{{ url_for('dashboard') }}';
         });
         modal.modal('hide');
@@ -160,6 +170,8 @@ $(document.body).on('click', '.delete_domain', function() {
 });
 </script>
 {% endblock %}
+
+
 {% block modals %}
 <div class="modal fade modal-warning" id="modal_delete_domain">
     <div class="modal-dialog">

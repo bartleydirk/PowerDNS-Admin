@@ -35,7 +35,7 @@
                         Apply Changes&nbsp;<i class="fa fa-floppy-o"></i>
                     </button>
                     {% else %}
-                    <button type="button" class="btn btn-flat btn-primary pull-left " id="button_update_from_master">
+                    <button type="button" class="btn btn-flat btn-primary pull-left " id="button_update_from_master" data-url="{{ url_for('record_update', domain_name=domain.name) }}">
                         Update from Master&nbsp;<i class="fa fa-download"></i>
                     </button>
                     {% endif %}

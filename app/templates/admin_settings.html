@@ -74,17 +74,19 @@
         "info" : true,
         "autoWidth" : false
     });
+
     $(document.body).on('click', '.setting-toggle-button', function() {
         var setting = $(this).prop('id');
-        applyChanges('', $SCRIPT_ROOT + '/admin/setting/' + setting + '/toggle', false, true)
+        console.log('toggle setting ' + setting);
+        applyChanges_({'setting': setting}, '{{ url_for("admin_settings_toggle") }}', false, true)
     });
     
     $(document.body).on('click', '.setting-save-button', function() {
         var setting = $(this).prop('id');
         var value = $(this).parents('tr').find('#value')[0].value;
-        var postdata = {'value': value};
+        var postdata = {'setting': setting, 'value': value};
         console.log('click .setting-save-button value "' + value + '"');
-        applyChanges(postdata, $SCRIPT_ROOT + '/admin/setting/' + setting + '/edit', false, true)
+        applyChanges_(postdata, '{{ url_for("admin_settings_edit") }}', false, true)
     });
 </script>
 {% endblock %} 

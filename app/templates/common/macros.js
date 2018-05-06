@@ -88,7 +88,7 @@ $('.otp_toggle').on('ifToggled', function(event) {
             'enable_otp' : enable_otp
         }
     };
-    applyChanges(postdata, $SCRIPT_ROOT + '/user/profile');
+    applyChanges(postdata, "{{ url_for('user_profile') }}");
     location.reload();
 });
 {% endmacro %}
