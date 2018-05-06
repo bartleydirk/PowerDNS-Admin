@@ -20,7 +20,7 @@ def usergroup_list():
     if request.method == 'GET':
         usergroups = db.session.query(UserGroup)\
                        .order_by(UserGroup.name)
-        retval = render_template('usergroup_list.html', usergroups=usergroups)
+        retval = render_template('groupacl/usergroup_list.html', usergroups=usergroups)
     return retval
 
 
@@ -75,11 +75,11 @@ def usergroup_maintain():
         usergroup = UserGroup(name, description)
         db.session.add(usergroup)
         db.session.commit()
-        retval = usergroup_render('usergroup_maintain_reload.html', usergroup.id)
+        retval = usergroup_render('groupacl/usergroup_maintain_reload.html', usergroup.id)
 
     elif request.method == 'GET':
         user_grp_id = intsafe(request.args.get('id', 0))
-        retval = usergroup_render('usergroup_maintain.html', user_grp_id)
+        retval = usergroup_render('groupacl/usergroup_maintain.html', user_grp_id)
 
     elif request.method == 'POST' and action == 'info':
         usergroup = db.session.query(UserGroup)\
@@ -89,7 +89,7 @@ def usergroup_maintain():
             usergroup.name = request.form.get('name', '')
             usergroup.description = request.form.get('description', '')
             db.session.commit()
-            retval = usergroup_render('usergroup_maintain_reload.html', user_grp_id)
+            retval = usergroup_render('groupacl/usergroup_maintain_reload.html', user_grp_id)
     elif request.method == 'POST' and action == 'members':
         members_tobe = [intsafe(uident) for uident in request.form.getlist('group_users[]')]
         mem_obj_list = db.session.query(UserGroupUser)\
@@ -111,7 +111,7 @@ def usergroup_maintain():
                 db.session.delete(mem_obj_list[memmap[uid]])
         db.session.commit()
 
-        retval = usergroup_render('usergroup_maintain_reload.html', user_grp_id)
+        retval = usergroup_render('groupacl/usergroup_maintain_reload.html', user_grp_id)
 
     elif request.method == 'POST' and action == 'delete':
         mem_obj_list = db.session.query(UserGroupUser)\
@@ -147,7 +147,7 @@ def usergroup_maintain():
                 db.session.delete(assoc_obj_list[memmap[dom_grp_id]])
         db.session.commit()
 
-        retval = usergroup_render('usergroup_maintain_reload.html', user_grp_id)
+        retval = usergroup_render('groupacl/usergroup_maintain_reload.html', user_grp_id)
 
     return retval
 
@@ -165,7 +165,7 @@ def domaingroup_list():
     if request.method == 'GET':
         domaingroups = db.session.query(DomainGroup)\
                        .order_by(DomainGroup.name)
-        retval = render_template('domaingroup_list.html', domaingroups=domaingroups)
+        retval = render_template('groupacl/domaingroup_list.html', domaingroups=domaingroups)
     return retval
 
 
@@ -222,11 +222,11 @@ def domaingroup_maintain():
         domaingroup = DomainGroup(name, description)
         db.session.add(domaingroup)
         db.session.commit()
-        retval = domaingroup_render('domaingroup_maintain_reload.html', domaingroup.id)
+        retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', domaingroup.id)
 
     elif request.method == 'GET':
         dgd_id = intsafe(request.args.get('id', 0))
-        retval = domaingroup_render('domaingroup_maintain.html', dgd_id)
+        retval = domaingroup_render('groupacl/domaingroup_maintain.html', dgd_id)
 
     elif request.method == 'POST' and action == 'info':
         domaingroup = db.session.query(DomainGroup)\
@@ -236,7 +236,7 @@ def domaingroup_maintain():
             domaingroup.name = request.form.get('name', '')
             domaingroup.description = request.form.get('description', '')
             db.session.commit()
-            retval = domaingroup_render('domaingroup_maintain_reload.html', dgd_id)
+            retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', dgd_id)
     elif request.method == 'POST' and action == 'members':
         members_tobe = [intsafe(gident) for gident in request.form.getlist('group_domains[]')]
 
@@ -259,7 +259,7 @@ def domaingroup_maintain():
                 db.session.delete(mem_obj_list[memmap[gid]])
         db.session.commit()
 
-        retval = domaingroup_render('domaingroup_maintain_reload.html', dgd_id)
+        retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', dgd_id)
 
     elif request.method == 'POST' and action == 'delete':
         mem_obj_list = db.session.query(DomainGroupDomain)\
@@ -295,6 +295,6 @@ def domaingroup_maintain():
                 db.session.delete(assoc_obj_list[memmap[usr_grp_id]])
         db.session.commit()
 
-        retval = usergroup_render('domaingroup_maintain_reload.html', user_grp_id)
+        retval = usergroup_render('groupacl/domaingroup_maintain_reload.html', user_grp_id)
 
     return retval
