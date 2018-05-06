@@ -5,8 +5,7 @@ from flask_login import login_required
 from flask import request, render_template
 
 from app import app, db
-from app.models import User, UserGroup, UserGroupUser, Domain, DomainGroup, DomainGroupDomain
-# DomainGroupUserGroup
+from app.models import User, UserGroup, UserGroupUser, Domain, DomainGroup, DomainGroupDomain, DomainGroupUserGroup
 from app.base import intsafe
 from app.views import admin_role_required
 
@@ -25,10 +24,10 @@ def usergroup_list():
     return retval
 
 
-def usergroup_render(tmplate, uguid):
+def usergroup_render(tmplate, usergrp_id):
     """View to create a user."""
     usergroup = db.session.query(UserGroup)\
-                  .filter(UserGroup.id == uguid)\
+                  .filter(UserGroup.id == usergrp_id)\
                   .first()
 
     if usergroup:
@@ -38,16 +37,25 @@ def usergroup_render(tmplate, uguid):
                   .all()
         # list of current members for the ui
         ugusers = db.session.query(UserGroupUser)\
-                    .filter(UserGroupUser.usergroup_id == uguid)\
+                    .filter(UserGroupUser.usergroup_id == usergrp_id)\
                     .order_by(UserGroupUser.user_id)\
                     .all()
         # I want to pass a integer list not a sqlachemy list.
         ugus = [item.user_id for item in ugusers]
+
+        dgugs_lst = db.session.query(DomainGroupUserGroup)\
+                      .filter(DomainGroupUserGroup.usergroup_id == usergrp_id)
+        dgrps_in = [dgug.domaingroup_id for dgug in dgugs_lst]
+        domgrps = db.session.query(DomainGroup)\
+                    .order_by(DomainGroup.name)
+
     else:
         users = []
         ugus = []
+        domgrps = []
+        dgrps_in = []
 
-    return render_template(tmplate, usergroup=usergroup, users=users, ugus=ugus)
+    return render_template(tmplate, usergroup=usergroup, users=users, ugus=ugus, domgrps=domgrps, dgrps_in=dgrps_in)
 
 
 @app.route('/admin/usergroup/manage', methods=['GET', 'POST'])
@@ -56,11 +64,11 @@ def usergroup_render(tmplate, uguid):
 def usergroup_maintain():
     """View for maintaining user groups."""
     # pylint: disable=R0914
-    ugu_id = intsafe(request.form.get('id', 0))
+    user_grp_id = intsafe(request.form.get('id', 0))
     action = request.form.get('action', None)
 
     retval = ''
-    if ugu_id == 0 and request.method == 'POST':
+    if user_grp_id == 0 and request.method == 'POST':
         # this is a create
         name = request.form.get('name', '')
         description = request.form.get('description', '')
@@ -70,23 +78,22 @@ def usergroup_maintain():
         retval = usergroup_render('usergroup_maintain_reload.html', usergroup.id)
 
     elif request.method == 'GET':
-        ugu_id = intsafe(request.args.get('id', 0))
-        retval = usergroup_render('usergroup_maintain.html', ugu_id)
+        user_grp_id = intsafe(request.args.get('id', 0))
+        retval = usergroup_render('usergroup_maintain.html', user_grp_id)
 
     elif request.method == 'POST' and action == 'info':
         usergroup = db.session.query(UserGroup)\
-                      .filter(UserGroup.id == ugu_id)\
+                      .filter(UserGroup.id == user_grp_id)\
                       .first()
         if usergroup:
             usergroup.name = request.form.get('name', '')
             usergroup.description = request.form.get('description', '')
             db.session.commit()
-            retval = usergroup_render('usergroup_maintain_reload.html', ugu_id)
+            retval = usergroup_render('usergroup_maintain_reload.html', user_grp_id)
     elif request.method == 'POST' and action == 'members':
         members_tobe = [intsafe(uident) for uident in request.form.getlist('group_users[]')]
-
         mem_obj_list = db.session.query(UserGroupUser)\
-                         .filter(UserGroupUser.usergroup_id == ugu_id)\
+                         .filter(UserGroupUser.usergroup_id == user_grp_id)\
                          .all()
         memmap = {}
         members_current = []
@@ -96,7 +103,7 @@ def usergroup_maintain():
 
         for uid in members_tobe:
             if uid not in members_current:
-                newmember = UserGroupUser(ugu_id, uid)
+                newmember = UserGroupUser(user_grp_id, uid)
                 db.session.add(newmember)
 
         for uid in members_current:
@@ -104,19 +111,43 @@ def usergroup_maintain():
                 db.session.delete(mem_obj_list[memmap[uid]])
         db.session.commit()
 
-        retval = usergroup_render('usergroup_maintain_reload.html', ugu_id)
+        retval = usergroup_render('usergroup_maintain_reload.html', user_grp_id)
 
     elif request.method == 'POST' and action == 'delete':
         mem_obj_list = db.session.query(UserGroupUser)\
-                         .filter(UserGroupUser.usergroup_id == ugu_id)
+                         .filter(UserGroupUser.usergroup_id == user_grp_id)
         for ugu in mem_obj_list:
             db.session.delete(ugu)
         usergroup = db.session.query(UserGroup)\
-                      .filter(UserGroup.id == ugu_id)\
+                      .filter(UserGroup.id == user_grp_id)\
                       .first()
         db.session.delete(usergroup)
         db.session.commit()
         retval = ''
+
+    elif request.method == 'POST' and action == 'associated':
+        assosciated_tobe = [intsafe(dom_grpid) for dom_grpid in request.form.getlist('group_associated[]')]
+        assoc_obj_list = db.session.query(DomainGroupUserGroup)\
+                           .filter(DomainGroupUserGroup.usergroup_id == user_grp_id)\
+                           .all()
+        memmap = {}
+        assosciated_current = []
+        for (pos, dgug_obj) in enumerate(assoc_obj_list):
+            assosciated_current.append(dgug_obj.domaingroup_id)
+            memmap[dgug_obj.domaingroup_id] = pos
+
+        # with list of associated_current and map to object
+        for dom_grp_id in assosciated_tobe:
+            if dom_grp_id not in assosciated_current:
+                new_dgug_obj = DomainGroupUserGroup(user_grp_id, dom_grp_id)
+                db.session.add(new_dgug_obj)
+
+        for dom_grp_id in assosciated_current:
+            if dom_grp_id not in assosciated_tobe:
+                db.session.delete(assoc_obj_list[memmap[dom_grp_id]])
+        db.session.commit()
+
+        retval = usergroup_render('usergroup_maintain_reload.html', user_grp_id)
 
     return retval
 
@@ -141,8 +172,8 @@ def domaingroup_list():
 def domaingroup_render(tmplate, dgdid):
     """View to create a Domain."""
     domaingroup = db.session.query(DomainGroup)\
-                  .filter(DomainGroup.id == dgdid)\
-                  .first()
+                    .filter(DomainGroup.id == dgdid)\
+                    .first()
 
     if domaingroup:
         # list of domains for the members ui
@@ -156,11 +187,22 @@ def domaingroup_render(tmplate, dgdid):
                     .all()
         # I want to pass a integer list not a sqlachemy list.
         dgds = [item.domain_id for item in dgdsers]
+
+        dgugs_lst = db.session.query(DomainGroupUserGroup)\
+                      .filter(DomainGroupUserGroup.domaingroup_id == dgdid)
+        usrgrps_in = [dgug.usergroup_id for dgug in dgugs_lst]
+        usr_grps = db.session.query(UserGroup)\
+                    .order_by(UserGroup.name)
+        #pprint(asdf)
+
     else:
         domains = []
         dgds = []
+        usrgrps_in = []
+        usr_grps = []
 
-    return render_template(tmplate, domaingroup=domaingroup, domains=domains, dgds=dgds)
+    return render_template(tmplate, domaingroup=domaingroup, domains=domains, dgds=dgds, usr_grps=usr_grps,
+                           usrgrps_in=usrgrps_in)
 
 
 @app.route('/admin/domaingroup/manage', methods=['GET', 'POST'])
@@ -230,5 +272,29 @@ def domaingroup_maintain():
         db.session.delete(domaingroup)
         db.session.commit()
         retval = ''
+
+    elif request.method == 'POST' and action == 'associated':
+        assosciated_tobe = [intsafe(usrgrp_id) for usrgrp_id in request.form.getlist('group_associated[]')]
+        assoc_obj_list = db.session.query(DomainGroupUserGroup)\
+                           .filter(DomainGroupUserGroup.usergroup_id == dgd_id)\
+                           .all()
+        memmap = {}
+        assosciated_current = []
+        for (pos, dgug_obj) in enumerate(assoc_obj_list):
+            assosciated_current.append(dgug_obj.usergroup_id)
+            memmap[dgug_obj.usergroup_id] = pos
+
+        # with list of associated_current and map to object
+        for usr_grp_id in assosciated_tobe:
+            if usr_grp_id not in assosciated_current:
+                new_dgug_obj = DomainGroupUserGroup(user_grp_id, usr_grp_id)
+                db.session.add(new_dgug_obj)
+
+        for usr_grp_id in assosciated_current:
+            if usr_grp_id not in assosciated_tobe:
+                db.session.delete(assoc_obj_list[memmap[usr_grp_id]])
+        db.session.commit()
+
+        retval = usergroup_render('domaingroup_maintain_reload.html', user_grp_id)
 
     return retval

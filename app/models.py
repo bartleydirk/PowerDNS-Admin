@@ -865,8 +865,8 @@ class DomainGroupUserGroup(db.Model):
     __tablename__ = 'domaingroup_usergroup'
     # pylint: disable=C0103
     id = db.Column(db.Integer, primary_key=True)
-    domaingroup_id = db.Column(db.Integer, db.ForeignKey('domain_group.id'), nullable=False)
-    usergroup_id = db.Column(db.Integer, db.ForeignKey('user_group.id'), nullable=False)
+    domaingroup_id = db.Column(db.Integer, db.ForeignKey('domaingroup.id'), nullable=False)
+    usergroup_id = db.Column(db.Integer, db.ForeignKey('usergroup.id'), nullable=False)
 
     def __init__(self, usergroup_id, domaingroup_id):
         """Initialize class properties."""

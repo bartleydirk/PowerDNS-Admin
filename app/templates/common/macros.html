@@ -66,7 +66,7 @@
 </div>
 {% endmacro %}
 
-{% macro usergroup_maintain_content(usergroup, users, ugus) %}
+{% macro usergroup_maintain_content(usergroup, users, ugus, domgrps, drgps_in) %}
     <div class="row">
         <div class="col-lg-12">
             <div class="box box-primary">
@@ -78,7 +78,10 @@
                     <div class="nav-tabs-custom" id="tabs">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#tabs-personal" data-toggle="tab">Group Info</a></li>
-                            {% if usergroup %}<li><a href="#tabs-members" data-toggle="tab">Change members</a></li>{% endif %}
+                            {% if usergroup %}
+                            <li><a href="#tabs-members" data-toggle="tab">Change members</a></li>
+                            <li><a href="#tabs-domaingroups" data-toggle="tab">Change Associated Domain Groups</a></li>
+                            {% endif %}
                         </ul>
                         <div class="tab-content">
                             <div class="tab-pane active" id="tabs-personal">
@@ -113,7 +116,8 @@
                                             <div class="form-group col-xs-2">
                                                 <select multiple="multiple" class="form-control" id="group_users" name="group_users[]">
                                                     {% for user in users %}
-                                                    <option {% if user.id in ugus %}selected{% endif %} value="{{ user.id }}" {% if user.role.name== 'Administrator' %}style="color: red"{% endif %}>{{ user.username}}</option>
+                                                    <option {% if user.id in ugus %}selected{% endif %} value="{{ user.id }}"
+                                                        {% if user.role.name== 'Administrator' %}style="color: red"{% endif %}>{{ user.firstname}} {{ user.lastname }}</option>
                                                     {% endfor %}
                                                 </select>
                                             </div>
@@ -123,6 +127,36 @@
                                             <div class="col-xs-offset-2">
                                                 <div class="form-group">
                                                     <button type="button" onclick="updatemembers()" class="btn btn-flat btn-primary">Update Members</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tabs-domaingroups">
+                                <div class="box">
+                                    <form method="post" id="domaingroups_frm">
+                                    <div class="box-header"><h3 class="box-title">Domains Associated to Group {{ usergroup.name }}</h3></div>
+                                    <div class="box-body">
+                                        <div class="row">
+                                            <div class="col-xs-2">
+                                                <p>Select Associated Domains.</p>
+                                                <p>Click on Domains to move from between columns.</p>
+                                            </div>
+                                            <div class="form-group col-xs-2">
+                                                <select multiple="multiple" class="form-control" id="associated_usergroups" name="group_associated[]">
+                                                    {% for domgrp in domgrps %}
+                                                    <option {% if domgrp.id in drgps_in %}selected{% endif %} value="{{ domgrp.id }}">{{ domgrp.name}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group"><input type="hidden" class="form-control" name="id" id="id" value="{{ usergroup.id }}" readonly></div>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="col-xs-offset-2">
+                                                <div class="form-group">
+                                                    <button type="button" onclick="updateassociated()" class="btn btn-flat btn-primary">Update Associated Groups</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -141,7 +175,7 @@
 
 <!-- Begin domain group -->
 
-{% macro domaingroup_maintain_content(domaingroup, domains, ugus) %}
+{% macro domaingroup_maintain_content(domaingroup, domains, ugus, usr_grps, usrgrps_in) %}
     <div class="row">
         <div class="col-lg-12">
             <div class="box box-primary">
@@ -153,7 +187,10 @@
                     <div class="nav-tabs-custom" id="tabs">
                         <ul class="nav nav-tabs">
                             <li class="active"><a href="#tabs-personal" data-toggle="tab">Group Info</a></li>
-                            {% if domaingroup %}<li><a href="#tabs-members" data-toggle="tab">Change members</a></li>{% endif %}
+                            {% if domaingroup %}
+                            <li><a href="#tabs-members" data-toggle="tab">Change members</a></li>
+                            <li><a href="#tabs-usergroups" data-toggle="tab">User Groups Associated</a></li>
+                            {% endif %}
                         </ul>
                         <div class="tab-content">
                             <div class="tab-pane active" id="tabs-personal">
@@ -183,7 +220,6 @@
                                             <div class="col-xs-2">
                                                 <p>Select Domains in Group.</p>
                                                 <p>Click on domains to move from between columns.</p>
-                                                <p>Domains in <font style="color: red;">red</font> are Administrators and already have access to <b>ALL</b> domains.</p>
                                             </div>
                                             <div class="form-group col-xs-2">
                                                 <select multiple="multiple" class="form-control" id="group_domains" name="group_domains[]">
@@ -198,6 +234,36 @@
                                             <div class="col-xs-offset-2">
                                                 <div class="form-group">
                                                     <button type="button" onclick="updatemembers()" class="btn btn-flat btn-primary">Update Members</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    </form>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tabs-usergroups">
+                                <div class="box">
+                                    <form method="post" id="usergroups_frm">
+                                    <div class="box-header"><h3 class="box-title">User Groups {{ domaingroup.name }}</h3></div>
+                                    <div class="box-body">
+                                        <div class="row">
+                                            <div class="col-xs-2">
+                                                <p>Select Associated User Groups.</p>
+                                                <p>Click on User Groups to move from between columns.</p>
+                                            </div>
+                                            <div class="form-group col-xs-2">
+                                                <select multiple="multiple" class="form-control" id="associated_usergroups" name="group_associated[]">
+                                                    {% for usergroup in usr_grps %}
+                                                    <option {% if usergroup.id in usrgrps_in %}selected{% endif %} value="{{ usergroup.id }}">{{ usergroup.name}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group"><input type="hidden" class="form-control" name="id" id="id" value="{{ domaingroup.id }}" readonly></div>
+                                        </div>
+                                        <div class="box-body">
+                                            <div class="col-xs-offset-2">
+                                                <div class="form-group">
+                                                    <button type="button" onclick="updateassociated()" class="btn btn-flat btn-primary">Update Associated Groups</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -231,13 +297,13 @@
   -moz-border-radius: 3px;
   border-radius: 3px;
   position: relative;
-  height: 500px;
-  width: 250px;
+  height: 600px;
+  width: 300px;
   padding: 0;
   overflow-y: auto;
 }
 .ms-container{
-  width: 700px;
+  width: 750px;
 }
 </style>
 {% endmacro %}

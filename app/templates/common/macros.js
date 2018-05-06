@@ -108,6 +108,7 @@ $(document).ready(function() {
     console.log('ready to maintain usergroup {% if usergroup %}{{ usergroup.name }}{% endif %}');
     // setTimeout(function() { insp_part_onload() }, 500);
     $("#group_users").multiSelect();
+    $("#associated_usergroups").multiSelect();
 });
 
 function updateinfo() {
@@ -124,6 +125,7 @@ function updateinfo() {
             console.log('updateinfo in success');
             $('#usergroup_content').html(data);
             $("#group_users").multiSelect();
+            $("#associated_usergroups").multiSelect();
         }
     });
 }
@@ -142,6 +144,7 @@ function updatemembers() {
             console.log('updatemembers in success');
             $('#usergroup_content').html(data);
             $("#group_users").multiSelect();
+            $("#associated_usergroups").multiSelect();
             $('a[href="#tabs-members"]').click();
         }
     });
@@ -166,6 +169,26 @@ function deletegroup() {
     } 
 }
 
+function updateassociated() {
+    console.log('updateassociated');
+    frmdata = form_to_object2('domaingroups_frm');
+    console.log('domaingroups_frm frmdata ' + object_to_debugstring(frmdata));
+    frmdata['action'] = 'associated';
+    $.ajax({
+        url: '{{ url_for("usergroup_maintain") }}',
+        type: "post",
+        data: frmdata,
+        datatype: 'html',
+        success: function(data){
+            console.log('updatemembers in success');
+            $('#usergroup_content').html(data);
+            $("#group_users").multiSelect();
+            $("#associated_usergroups").multiSelect();
+            $('a[href="#tabs-domaingroups"]').click();
+        }
+    });
+}
+
 {% endmacro %}
 
 
@@ -175,6 +198,7 @@ $(document).ready(function() {
     console.log('ready to maintain domaingroup {% if domaingroup %}{{ domaingroup.name }}{% endif %}');
     // setTimeout(function() { insp_part_onload() }, 500);
     $("#group_domains").multiSelect();
+    $("#associated_usergroups").multiSelect();
 });
 
 function updateinfo() {
@@ -190,8 +214,8 @@ function updateinfo() {
         success: function(data){
             console.log('updateinfo in success');
             $('#domaingroup_content').html(data);
-            // its a create
             $("#group_domains").multiSelect();
+            $("#associated_usergroups").multiSelect();
         }
     });
 }
@@ -210,6 +234,7 @@ function updatemembers() {
             console.log('updatemembers in success');
             $('#domaingroup_content').html(data);
             $("#group_domains").multiSelect();
+            $("#associated_usergroups").multiSelect();
             $('a[href="#tabs-members"]').click();
         }
     });
@@ -234,4 +259,23 @@ function deletegroup() {
     } 
 }
 
+function updateassociated() {
+    console.log('updateassociated');
+    frmdata = form_to_object2('usergroups_frm');
+    console.log('domaingroups_frm frmdata ' + object_to_debugstring(frmdata));
+    frmdata['action'] = 'associated';
+    $.ajax({
+        url: '{{ url_for("usergroup_maintain") }}',
+        type: "post",
+        data: frmdata,
+        datatype: 'html',
+        success: function(data){
+            console.log('updatemembers in success');
+            $('#usergroup_content').html(data);
+            $("#group_users").multiSelect();
+            $("#associated_usergroups").multiSelect();
+            $('a[href="#tabs-domaingroups"]').click();
+        }
+    });
+}
 {% endmacro %}
