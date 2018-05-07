@@ -73,7 +73,7 @@ def allowed_domains():
     return netqry
 
 
-def is_allowed_domain(domainname, checkrole=True):
+def is_allowed_domain(domainname, current_user_id, checkrole=True):
     """Build a query to populate domains with user and group acls considered."""
     domidqry = db.session.query(Domain.id)\
                  .filter(Domain.name == domainname)\
@@ -83,9 +83,9 @@ def is_allowed_domain(domainname, checkrole=True):
         if checkrole:
             duqry = db.session.query(Domain.id) \
                       .join(DomainUser)\
-                      .filter(DomainUser.user_id == current_user.id)\
+                      .filter(DomainUser.user_id == current_user_id)\
                       .subquery('duqry')
-        dgqry = query_acldomains_fromuser(current_user.id)
+        dgqry = query_acldomains_fromuser(current_user_id)
         dgqry = dgqry.subquery('dgqry')
     
         netqry = db.session.query(Domain.id)

@@ -16,7 +16,7 @@ from app import app, db
 from app.models import Domain
 # from app.models import User, Domain, History, Setting, DomainSetting
 # pylint: disable=E0401,E0001,E1101
-from .base import Record
+from .base import Record, is_allowed_domain
 
 DBGREQUEST = False
 DBGDATA = False
@@ -224,6 +224,9 @@ def addhost():
     if not token_verify():
         return jsonify(retval='No Token')
     username = getheadervalue(request.headers, 'X-API-User')
+    user = db.session.query(User) \
+             .filter(User.username == username) \
+             .first()
     addresult = {}
 
     recorddata = json.loads(request.data)
@@ -235,6 +238,9 @@ def addhost():
         domainname = get_domain_fromname(name)
         if not domainname:
             return jsonify(error='error getting domain name')
+        is_allowed = is_allowed_domain(domainname, user.id)
+        if not is_allowed:
+            return jsonify(error='error not allowed to modify domainname %s' % (domainname))
 
         # show("type of recorddata is :\n%s" % (type(recorddata)), level=6)
         # , type_='A', ttl=86400, disabled=False

@@ -156,7 +156,7 @@ def domain_permission_required(f):
             return f(*args, **kwargs)
         if 'domain_name' in kwargs:
             domain_name = kwargs['domain_name']
-            if is_allowed_domain(domain_name, checkrole=False):
+            if is_allowed_domain(domain_name, current_user.id, checkrole=False):
                 return f(*args, **kwargs)
             else:
                 return redirect(url_for('error', code=401))
