@@ -22,7 +22,8 @@ from flask import g, request, make_response, jsonify, render_template, session, 
 from app import app, login_manager, github, db, NEW_SCHEMA  # , LOGGING
 from app.lib import utils
 from app.models import User, Domain, History, Setting, DomainSetting
-from app.base import Record, Server, Anonymous, booleanval, allowed_domains, DisplayUserAcls
+from app.base import Record, Server, Anonymous, booleanval, allowed_domains, is_allowed_domain, DisplayUserAcls, \
+    query_acldomains_fromuser
 
 
 jinja2.filters.FILTERS['display_record_name'] = utils.display_record_name
@@ -134,7 +135,7 @@ def login_via_authorization_header(request_):
 # END USER AUTHENTICATION HANDLER
 
 
-# START CUSTOMIZE DECORATOR
+# START CUSTOMIZE DECORATORS
 def admin_role_required(f):
     """An admin role is required."""
     @wraps(f)
@@ -144,7 +145,26 @@ def admin_role_required(f):
             return redirect(url_for('error', code=401))
         return f(*args, **kwargs)
     return decorated_function
-# END CUSTOMIZE DECORATOR
+
+
+def domain_permission_required(f):
+    """Permission to the domain is required."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        """Decorated Function."""
+        if g.user.role.name == 'Administrator':
+            return f(*args, **kwargs)
+        if 'domain_name' in kwargs:
+            domain_name = kwargs['domain_name']
+            if is_allowed_domain(domain_name, checkrole=False):
+                return f(*args, **kwargs)
+            else:
+                return redirect(url_for('error', code=401))
+        else:
+            return f(*args, **kwargs)
+        return f(*args, **kwargs)
+    return decorated_function
+# END CUSTOMIZE DECORATORS
 
 
 # START VIEWS
@@ -343,6 +363,7 @@ def dashboard():
 @app.route('/domain/<path:domain_name>', methods=['GET', 'POST'])
 @app.route('/domain', methods=['GET', 'POST'])
 @login_required
+@domain_permission_required
 def domain(domain_name):
     """Domain Route, Listing the records."""
     # pylint: disable=R0914,R0912
@@ -949,5 +970,18 @@ def dyndns_update():
 def index():
     """Index page, redirect to dashboard."""
     return redirect(url_for('dashboard'))
+
+
+@app.route('/testme', methods=['GET', 'POST'])
+def testme():
+    qry = db.session.query(User)
+    test = {}
+    for user in qry:
+        qry2 = query_acldomains_fromuser(user.id)
+        lst = []
+        for item in qry2:
+            lst.append(item.domain_id)
+        test[user.id] = str(lst)
+    return jsonify(test=test)
 
 # END VIEWS

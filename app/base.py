@@ -47,6 +47,15 @@ def intsafe(inval):
     return val
 
 
+def query_acldomains_fromuser(userid):
+    """Build a query for finding domains from known user."""
+    dgqry = db.session.query(DomainGroupDomain.domain_id)\
+              .join(DomainGroupUserGroup, DomainGroupUserGroup.domaingroup_id == DomainGroupDomain.domaingroup_id)\
+              .join(UserGroupUser, UserGroupUser.usergroup_id == DomainGroupUserGroup.usergroup_id)\
+              .filter(UserGroupUser.user_id == userid)
+    return dgqry
+    
+
 def allowed_domains():
     """Build a query to populate domains with user and group acls considered."""
     if current_user.role.name == 'Administrator':
@@ -56,22 +65,42 @@ def allowed_domains():
                   .join(DomainUser)\
                   .filter(DomainUser.user_id == current_user.id)\
                   .subquery('duqry')
-
-        uguqry = db.session.query(UserGroupUser.usergroup_id)\
-                   .filter(UserGroupUser.user_id == current_user.id)\
-                   .subquery('uguqry')
-        dgugqry = db.session.query(DomainGroupUserGroup.domaingroup_id)\
-                    .filter(DomainGroupUserGroup.usergroup_id.in_(uguqry))\
-                    .subquery('dgugqry')
-        dgqry = db.session.query(DomainGroupDomain.domain_id)\
-                  .filter(DomainGroupDomain.domaingroup_id.in_(dgugqry))\
-                  .subquery('dgqry')
-
+        dgqry = query_acldomains_fromuser(current_user.id)
+        dgqry = dgqry.subquery('dgqry')
         netqry = db.session.query(Domain)\
                    .filter(db.or_(Domain.id.in_(dgqry), Domain.id.in_(duqry)))\
                    .all()
     return netqry
 
+
+def is_allowed_domain(domainname, checkrole=True):
+    """Build a query to populate domains with user and group acls considered."""
+    domidqry = db.session.query(Domain.id)\
+                 .filter(Domain.name == domainname)\
+                 .first()
+    retval = True
+    if domidqry:
+        if checkrole:
+            duqry = db.session.query(Domain.id) \
+                      .join(DomainUser)\
+                      .filter(DomainUser.user_id == current_user.id)\
+                      .subquery('duqry')
+        dgqry = query_acldomains_fromuser(current_user.id)
+        dgqry = dgqry.subquery('dgqry')
+    
+        netqry = db.session.query(Domain.id)
+        if checkrole:
+            netqry = netqry.filter(db.or_(Domain.id.in_(dgqry), Domain.id.in_(duqry)))
+        else:
+            netqry = netqry.filter(Domain.id.in_(dgqry))
+        netqry = netqry.filter(Domain.id == domidqry.id)\
+                       .all()
+        if netqry:
+            retval = True
+        else:
+            retval = False
+
+    return retval
 
 class DisplayUserAcls(object):
     """Helper class for displaying what user groups and domain groups they are members of."""
