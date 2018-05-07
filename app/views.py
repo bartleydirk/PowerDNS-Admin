@@ -974,6 +974,7 @@ def index():
 
 @app.route('/testme', methods=['GET', 'POST'])
 def testme():
+    """A Testing only route, to see if a change to acl logic has desired effect, which is no effect."""
     qry = db.session.query(User)
     test = {}
     for user in qry:

@@ -238,8 +238,7 @@ def addhost():
         domainname = get_domain_fromname(name)
         if not domainname:
             return jsonify(error='error getting domain name')
-        is_allowed = is_allowed_domain(domainname, user.id)
-        if not is_allowed:
+        if not is_allowed_domain(domainname, user.id):
             return jsonify(error='error not allowed to modify domainname %s' % (domainname))
 
         # show("type of recorddata is :\n%s" % (type(recorddata)), level=6)

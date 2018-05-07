@@ -24,10 +24,7 @@ from .models import History, Domain, DomainSetting, Setting, Rrset, UserGroup, U
 def booleanval(val):
     """Function to return boolean."""
     # pylint: disable=R1703
-    if val in ['true', '1', 't', 'y', 'yes', 'Y', 'T', True, 'True']:
-        return True
-    else:
-        return False
+    return val in ['true', '1', 't', 'y', 'yes', 'Y', 'T', True, 'True']
 
 
 def intsafe(inval):
@@ -54,7 +51,7 @@ def query_acldomains_fromuser(userid):
               .join(UserGroupUser, UserGroupUser.usergroup_id == DomainGroupUserGroup.usergroup_id)\
               .filter(UserGroupUser.user_id == userid)
     return dgqry
-    
+
 
 def allowed_domains():
     """Build a query to populate domains with user and group acls considered."""
@@ -87,7 +84,7 @@ def is_allowed_domain(domainname, current_user_id, checkrole=True):
                       .subquery('duqry')
         dgqry = query_acldomains_fromuser(current_user_id)
         dgqry = dgqry.subquery('dgqry')
-    
+
         netqry = db.session.query(Domain.id)
         if checkrole:
             netqry = netqry.filter(db.or_(Domain.id.in_(dgqry), Domain.id.in_(duqry)))
@@ -95,12 +92,11 @@ def is_allowed_domain(domainname, current_user_id, checkrole=True):
             netqry = netqry.filter(Domain.id.in_(dgqry))
         netqry = netqry.filter(Domain.id == domidqry.id)\
                        .all()
-        if netqry:
-            retval = True
-        else:
-            retval = False
+
+        retval = bool(netqry)
 
     return retval
+
 
 class DisplayUserAcls(object):
     """Helper class for displaying what user groups and domain groups they are members of."""
