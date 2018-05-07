@@ -288,7 +288,10 @@ def delrec():
     retval = 'begin'
     if not token_verify():
         retval = jsonify(retval='No Token')
-    # username = getheadervalue(request.headers, 'X-API-User') FIX use this to LOG
+    username = getheadervalue(request.headers, 'X-API-User')  # FIX use this to LOG
+    user = db.session.query(User) \
+             .filter(User.username == username) \
+             .first()
 
     recorddata = json.loads(request.data)
     show("print of recorddata is :\n%s" % (recorddata), level=6)
@@ -297,6 +300,10 @@ def delrec():
         name = recorddata['name']
         show("name is :%s" % (name), level=6)
         domainname = get_domain_fromname(name)
+
+        is_allowed = is_allowed_domain(domainname, user.id)
+        if not is_allowed:
+            return jsonify(error='error not allowed to modify domainname %s' % (domainname))
 
         rectype = 'A'
         if 'rectype' in recorddata:
@@ -318,6 +325,9 @@ def fixrev():
     if not token_verify():
         retval = jsonify(retval='No Token')
     username = getheadervalue(request.headers, 'X-API-User')
+    user = db.session.query(User) \
+             .filter(User.username == username) \
+             .first()
     dom_ = Domain()
 
     recorddata = json.loads(request.data)
@@ -331,6 +341,10 @@ def fixrev():
         domain_reverse_name = dom_.get_reverse_domain_name(revname)
         show("fixrev name is :%s revname is %s domain_reverse_name %s" %
              (hostname, revname, domain_reverse_name), level=6)
+
+        is_allowed = is_allowed_domain(domain_reverse_name, user.id)
+        if not is_allowed:
+            return jsonify(error='error not allowed to modify domainname %s' % (domain_reverse_name))
 
         mdl = db.session.query(Domain)\
                 .filter(Domain.name == domain_reverse_name)\
