@@ -73,6 +73,9 @@ class RecordsForm(form.Form):
     """Form For Domain Inquiry Page."""
 
     recordlike = fields.TextField('Record Like', default='')
+    recordalsolike = fields.TextField('Record Also Like', default='')
+    contentlike = fields.TextField('Content Like', default='')
+    contentalsolike = fields.TextField('Content Also Like', default='')
     forrev = fields.SelectField('For or Rev', default='e',
                                 choices=[('f', 'Forward'), ('r', 'Reverse'), ('e', 'Either')])
     domain = fields.SelectField('Domain', default='any')
@@ -94,6 +97,12 @@ def records_query(dbg=False):
                 .join(Domains, Domains.id == Records.domain_id)
     if frm.recordlike.data != '':
         records = records.filter(Domains.name.like('%%%s%%' % (frm.recordlike.data)))
+    if frm.recordlike.data != '':
+        records = records.filter(Domains.name.like('%%%s%%' % (frm.recordalsolike.data)))
+    if frm.recordlike.data != '':
+        records = records.filter(Domains.name.like('%%%s%%' % (frm.contentlike.data)))
+    if frm.recordlike.data != '':
+        records = records.filter(Domains.name.like('%%%s%%' % (frm.contentalsolike.data)))
     if frm.forrev.data == 'r':
         records = records.filter(Domains.name.like('%%in-addr.arpa'))
     elif frm.forrev.data == 'f':
