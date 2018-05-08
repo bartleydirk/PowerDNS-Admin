@@ -315,6 +315,7 @@ def domaingroup_check(domaingroup_id, domain_id):
         db.session.commit()
     # DomainGroupDomain domaingroup_id, domain_id
 
+
 @app.route('/setdomaingroups', methods=['GET', 'POST'])
 def setdomaingroups():
     """A Testing only route, to see if a change to acl logic has desired effect, which is no effect."""

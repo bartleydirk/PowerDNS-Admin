@@ -984,8 +984,3 @@ def testme():
             lst.append(item.domain_id)
         test[user.id] = str(lst)
     return jsonify(test=test)
-
-
-
-
-# END VIEWS
