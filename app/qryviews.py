@@ -96,13 +96,13 @@ def records_query(dbg=False):
                                Records.auth, Domains.name.label('dname'))\
                 .join(Domains, Domains.id == Records.domain_id)
     if frm.recordlike.data != '':
-        records = records.filter(Domains.name.like('%%%s%%' % (frm.recordlike.data)))
-    if frm.recordlike.data != '':
-        records = records.filter(Domains.name.like('%%%s%%' % (frm.recordalsolike.data)))
-    if frm.recordlike.data != '':
-        records = records.filter(Domains.name.like('%%%s%%' % (frm.contentlike.data)))
-    if frm.recordlike.data != '':
-        records = records.filter(Domains.name.like('%%%s%%' % (frm.contentalsolike.data)))
+        records = records.filter(Records.name.like('%%%s%%' % (frm.recordlike.data)))
+    if frm.recordalsolike.data != '':
+        records = records.filter(Records.name.like('%%%s%%' % (frm.recordalsolike.data)))
+    if frm.contentlike.data != '':
+        records = records.filter(Records.content.like('%%%s%%' % (frm.contentlike.data)))
+    if frm.contentalsolike.data != '':
+        records = records.filter(Records.content.like('%%%s%%' % (frm.contentalsolike.data)))
     if frm.forrev.data == 'r':
         records = records.filter(Domains.name.like('%%in-addr.arpa'))
     elif frm.forrev.data == 'f':
