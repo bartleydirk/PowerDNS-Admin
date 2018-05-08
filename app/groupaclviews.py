@@ -1,8 +1,9 @@
 """Views for the Power DNS Admin application."""
 # pylint: disable=E1101,E0611,E0401
 
+import re
 from flask_login import login_required
-from flask import request, render_template
+from flask import request, render_template, jsonify
 
 from app import app, db
 from app.models import User, UserGroup, UserGroupUser, Domain, DomainGroup, DomainGroupDomain, DomainGroupUserGroup
@@ -300,3 +301,54 @@ def domaingroup_maintain():
         retval = domaingroup_render('groupacl/domaingroup_maintain_reload.html', domn_grp_id)
 
     return retval
+
+
+def domaingroup_check(domaingroup_id, domain_id):
+    """Add new member to doamin group if not already there."""
+    qry = db.session.query(DomainGroupDomain)\
+            .filter(DomainGroupDomain.domain_id == domain_id)\
+            .filter(DomainGroupDomain.domaingroup_id == domaingroup_id)\
+            .all()
+    if not qry:
+        dgd = DomainGroupDomain(domaingroup_id, domain_id)
+        db.session.add(dgd)
+        db.session.commit()
+    # DomainGroupDomain domaingroup_id, domain_id
+
+@app.route('/setdomaingroups', methods=['GET', 'POST'])
+def setdomaingroups():
+    """A Testing only route, to see if a change to acl logic has desired effect, which is no effect."""
+    re_inaddrarpa = re.compile(r'\.in-addr\.arpa$')
+    re_one92 = re.compile(r'\.168\.192\.in-addr\.arpa$')
+    re_ten = re.compile(r'\.10\.in-addr\.arpa$')
+    re_one72a = re.compile(r'\.1[6-9]\.172\.in-addr\.arpa$')
+    re_one72b = re.compile(r'\.2[0-9]\.172\.in-addr\.arpa$')
+    re_one72c = re.compile(r'\.3[0-1]\.172\.in-addr\.arpa$')
+    re_pop = re.compile(r'pop$')
+    re_lod = re.compile(r'lod$')
+    Domain().update()
+    lst = []
+    qry = db.session.query(Domain)
+    #DomainGroupDomain domaingroup_id, domain_id
+    for domain in qry:
+        isreverse = False
+        isprivate = False
+        if re_inaddrarpa.search(domain.name):
+            isreverse = True
+        if re_one92.search(domain.name) or re_ten.search(domain.name) or re_one72a.search(domain.name) \
+                or re_one72b.search(domain.name) or re_one72c.search(domain.name):
+            isprivate = True
+        if isreverse and not isprivate:
+            # public reverse 6
+            domaingroup_check(6, domain.id)
+        elif isreverse:
+            # private reverse
+            domaingroup_check(2, domain.id)
+        elif re_pop.search(domain.name) or re_lod.search(domain.name):
+            # private forward
+            domaingroup_check(4, domain.id)
+        else:
+            # public forward 5
+            domaingroup_check(5, domain.id)
+            lst.append("%s %s" % (domain.name, isreverse))
+    return jsonify(lst=lst)
