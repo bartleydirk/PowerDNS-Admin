@@ -82,6 +82,7 @@ class RecordsForm(form.Form):
     type_ = fields.SelectField('Record Type', default='any',
                                choices=[('any', 'Any'), ('A', 'A'), ('PTR', 'PTR'), ('CNAME', 'CNAME'), ('MX', 'MX'),
                                         ('NS', 'NS'), ('SOA', 'SOA'), ('SRV', 'SRV'), ('TXT', 'TXT')])
+    limit = fields.IntegerField('Limit', default=200)
 
 
 def records_query(dbg=False):
@@ -112,7 +113,9 @@ def records_query(dbg=False):
     if frm.type_.data != 'any':
         records = records.filter(Records.type == frm.type_.data)
     records = records.order_by(Records.name)
-    records = records.limit(200)
+    if frm.limit.data:
+        records = records.limit(frm.limit.data)
+
     return (frm, records)
 
 
