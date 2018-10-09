@@ -17,7 +17,7 @@ from app import app, db, PDNS_STATS_URL, LOGGING, PDNS_API_KEY, API_EXTENDED_URL
 # pylint: disable=E0611
 from app.lib import utils
 from .models import History, Domain, DomainSetting, Setting, Rrset, UserGroup, UserGroupUser, DomainGroup, \
-    DomainGroupDomain, DomainGroupUserGroup, DomainUser
+    DomainGroupDomain, DomainGroupUserGroup, DomainUser, User
 # pylint: disable=W0703,R1705,E1101
 
 
@@ -72,6 +72,14 @@ def allowed_domains():
 
 def is_allowed_domain(domainname, current_user_id, checkrole=True):
     """Build a query to populate domains with user and group acls considered."""
+    uqry = db.session.query(User)\
+             .filter(User.id == current_user_id)\
+             .first()
+    if uqry:
+        if uqry.role_id == 1:
+            LOGGING.debug('user is an admin %s', uqry.username)
+            return True
+
     domidqry = db.session.query(Domain.id)\
                  .filter(Domain.name == domainname)\
                  .first()
