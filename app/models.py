@@ -110,7 +110,12 @@ class User(db.Model):
     def check_passwd_local(self, hashed_password):
         """Validate password."""
         # Check hased password. Useing bcrypt, the salt is saved into the hash itself
-        return bcrypt.checkpw(self.plain_text_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        retval = False
+        try:
+            retval = bcrypt.checkpw(self.plain_text_password.encode('utf-8'), hashed_password.encode('utf-8'))
+        except ValueError:
+            pass
+        return retval
 
     def get_user_info_by_id(self):
         """Retrieve a user by id."""
