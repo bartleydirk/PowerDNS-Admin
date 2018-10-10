@@ -1,13 +1,4 @@
 {% macro manageuser() %}
-// set up user data table
-$("#tbl_users").DataTable({
-    "paging" : true,
-    "lengthChange" : false,
-    "searching" : true,
-    "ordering" : true,
-    "info" : true,
-    "autoWidth" : false
-});
 
 // handle revocation of privileges
 $(document.body).on('click', '.button_revoke', function() {
@@ -38,24 +29,51 @@ $(document.body).on('click', '.button_delete', function() {
     modal.modal('show');
 });
 
-// initialize pretty checkboxes
-$('.admin_toggle').iCheck({
-    checkboxClass : 'icheckbox_square-blue',
-    increaseArea : '20%' // optional
+
+
+$(document).ready(function() {
+    //console.log('yes i am ready');
+    //$('.admin_toggle').each(function(i, obj) {
+    //    var is_admin = $(this).prop('checked');
+    //    var username = $(this).prop('id');
+    //    console.log('iter admin "' + is_admin + '" "' + username + '"');
+    //});
+
+    setTimeout(function() { onload_hmmm(); }, 300);
+    $('.admin_toggle').change(function() {
+        var is_admin = $(this).prop('checked');
+        var username = $(this).prop('id');
+        console.log('admin_toggle username "' + username + '" is_admin "' + is_admin + '"');
+        postdata = {
+            'action' : 'set_admin',
+            'username' : username,
+            'is_admin' : is_admin
+        };
+        applyChanges_(postdata, '{{ url_for("admin_manageuser") }}', false, false);
+    });
 });
 
-// handle checkbox toggling
-$(document.body).on('ifToggled', '.admin_toggle', function() {
-    var is_admin = $(this).prop('checked');
-    var username = $(this).prop('id');
-    console.log('ifToggled username "' + username + '" is_admin "' + is_admin + '"')
-    postdata = {
-        'action' : 'set_admin',
-        'username' : username,
-        'is_admin' : is_admin
-    };
-    applyChanges_(postdata, '{{ url_for("admin_manageuser") }}', false, false)
-});
+function onload_hmmm() {
+    console.log('onload_hmmm');
+    set_table();
+}
+
+function set_table() {
+    // initialize pretty checkboxes
+    //$('.admin_toggle').iCheck({
+    //    checkboxClass : 'icheckbox_square-blue',
+    //    increaseArea : '20%' // optional
+    //});
+    // set up user data table
+    $("#tbl_users").DataTable({
+        "paging" : true,
+        "lengthChange" : false,
+        "searching" : true,
+        "ordering" : true,
+        "info" : true,
+        "autoWidth" : false
+    });
+}
 {% endmacro %}
 
 
